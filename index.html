@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>INVSBL WRLD</title>
+
+    <!-- Times New Roman is a system font — no external load needed -->
+  </head>
+  <body>
+
+    <!-- ── Landing ──────────────────────────────────────────────────────── -->
+    <section id="landing">
+
+      <!-- Glitch overlay slices — driven by CSS vars + JS -->
+      <div id="glitch-overlay" aria-hidden="true">
+        <div class="glitch-slice" id="gs1"></div>
+        <div class="glitch-slice" id="gs2"></div>
+        <div class="glitch-slice" id="gs3"></div>
+      </div>
+
+      <!-- 3D letter canvas — sits behind the CSS scramble spans -->
+      <canvas id="landing-gl"></canvas>
+
+      <!-- Title — each word on its own row, chars injected by TextScrambler -->
+      <div class="title-wrap" id="titleWrap">
+        <div class="title-row" id="row1"></div>
+        <div class="title-row" id="row2"></div>
+      </div>
+
+      <!-- Scroll cue — appears after title locks, no button -->
+      <div class="scroll-cue" id="scrollCue" style="opacity:0">
+        <span>SCROLL</span>
+        <div class="cue-line"></div>
+      </div>
+
+    </section>
+
+    <!-- ── Shop ─────────────────────────────────────────────────────────── -->
+    <section id="shop" style="display:none">
+      <nav class="shop-nav">
+        <button class="nav-back" id="navBack" style="visibility:hidden;pointer-events:none;"></button>
+        <div class="nav-right">
+          <div class="item-counter">
+            <span id="currentIndex">01</span>
+            <span class="divider">/</span>
+            <span id="totalItems">01</span>
+          </div>
+          <button class="cart-toggle" id="cartToggle">
+            (<span id="cartCount">0</span>)
+          </button>
+        </div>
+      </nav>
+
+      <div class="shop-canvas-container"></div>
+
+      <div class="shop-info">
+        <div class="item-meta">
+          <p class="item-collection" id="itemCollection">COLLECTION</p>
+          <h2 class="item-name" id="itemName">LOADING</h2>
+          <p class="item-price" id="itemPrice">—</p>
+        </div>
+      </div>
+
+      <!-- Add to cart — fixed bottom right -->
+      <button class="add-to-cart-btn" id="addToCart">ADD TO CART</button>
+
+      <div class="dots-nav">
+        <div class="dots-arrow dots-arrow--up"></div>
+        <div class="item-dots" id="itemDots"></div>
+        <div class="dots-arrow dots-arrow--down"></div>
+      </div>
+    </section>
+
+    <!-- ── Cart Panel ─────────────────────────────────────────────────────── -->
+    <div id="cartPanel" class="cart-panel" aria-hidden="true" style="display:none">
+      <div class="cart-header">
+        <span class="cart-title">BAG</span>
+        <button class="cart-close" id="cartClose">✕</button>
+      </div>
+      <div class="cart-body" id="cartBody">
+        <p class="cart-empty">YOUR BAG IS EMPTY</p>
+      </div>
+      <div class="cart-footer">
+        <div class="cart-subtotal">
+          <span>SUBTOTAL</span>
+          <span id="cartSubtotal">—</span>
+        </div>
+        <button class="cart-checkout-btn" id="cartCheckout">CHECKOUT</button>
+      </div>
+    </div>
+
+    <!-- WebGL canvas — fullscreen, behind everything, only active in shop -->
+    <canvas id="webgl" style="display:none"></canvas>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
