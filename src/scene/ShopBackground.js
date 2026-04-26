@@ -88,10 +88,10 @@ export class ShopBackground {
       uniform vec2 uResolution;
 
       void main () {
-        // 50% fewer rows → pitch doubled from 28 to 56px
-        float pitch  = 56.0;
-        // 20% smaller → 4 * 0.8 = 3.2px
-        float radius = 3.2;
+        // halved dot count (×√2 pitch) → 56 * 1.414 ≈ 79px
+        float pitch  = 79.0;
+        // 10% smaller → 3.2 * 0.9 = 2.88px
+        float radius = 2.88;
         float soft   = 1.0;
 
         vec2 px     = gl_FragCoord.xy;
