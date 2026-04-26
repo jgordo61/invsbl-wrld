@@ -46,8 +46,8 @@ export class GlitchEngine {
   _schedule() {
     if (!this._active) return
     const interval = this._mode === 'scrambling'
-      ? 300 + Math.random() * 600    // 0.3–0.9 s while scrambling
-      : 800 + Math.random() * 2200   // 0.8–3 s when settled (was 4–12 s)
+      ? 200 + Math.random() * 500    // 0.2–0.7 s while scrambling
+      : 400 + Math.random() * 1200   // 0.4–1.6 s when settled
 
     this._timer = setTimeout(() => {
       this._fireRandom()
@@ -58,43 +58,59 @@ export class GlitchEngine {
   _fireRandom() {
     const roll = Math.random()
 
-    if (roll < 0.60) {
-      this._sliceGlitch()                 // more horizontal slices
-    } else if (roll < 0.78) {
+    if (roll < 0.50) {
+      this._sliceGlitch()
+    } else if (roll < 0.68) {
       this._chromaGlitch()
-    } else if (roll < 0.88) {
+    } else if (roll < 0.78) {
       this._flickerGlitch()
-    } else {
+    } else if (roll < 0.90) {
       // Heavy compound glitch: slices + chroma simultaneously
       this._sliceGlitch()
       this._chromaGlitch()
+    } else {
+      // Full-page scan burst
+      this._scanBurst()
     }
   }
 
   // ── Effect: horizontal slice displacement ─────────────────────────────────
   _sliceGlitch() {
-    const sliceCount = 1 + Math.floor(Math.random() * (this.sliceEls.length + 2))
+    const sliceCount = 2 + Math.floor(Math.random() * this.sliceEls.length)
 
-    // Randomise which slices fire and their positions/offsets
     for (let i = 0; i < sliceCount; i++) {
-      const el = this.sliceEls[i]
+      const el = this.sliceEls[i % this.sliceEls.length]
       if (!el) continue
 
-      const top    = 10 + Math.random() * 75          // % of title height
-      const height = 3  + Math.random() * 18          // px
-      const shift  = (Math.random() - 0.5) * 32       // px left/right
-      const dur    = 40 + Math.random() * 130         // ms
+      const top    = 5  + Math.random() * 88          // % — full page height
+      const height = 2  + Math.random() * 28          // px — taller slices
+      const shift  = (Math.random() - 0.5) * 80       // px — bigger horizontal shift
+      const dur    = 40 + Math.random() * 160         // ms
 
       el.style.cssText = `
         top: ${top}%;
         height: ${height}px;
         transform: translateX(${shift}px);
-        opacity: 1;
+        opacity: ${0.6 + Math.random() * 0.4};
       `
 
       setTimeout(() => {
         el.style.cssText = 'opacity: 0;'
       }, dur)
+    }
+  }
+
+  // ── Effect: rapid multi-slice full-screen scan burst ──────────────────────
+  _scanBurst() {
+    const steps = 3 + Math.floor(Math.random() * 3)
+    let   t     = 0
+
+    for (let s = 0; s < steps; s++) {
+      setTimeout(() => {
+        this._sliceGlitch()
+        if (Math.random() > 0.5) this._chromaGlitch()
+      }, t)
+      t += 40 + Math.random() * 60
     }
   }
 

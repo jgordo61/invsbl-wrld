@@ -42,6 +42,10 @@ export class JewelryViewer extends THREE.EventDispatcher {
   // ── Load ──────────────────────────────────────────────────────────────────
   async load() {
     try {
+      if (this.config.toc) {
+        // TOC item — blank 3D scene, nothing to render
+        return this
+      }
       if (this.config.modelUrl) {
         try {
           const gltf = await this._loadGLTF(this.config.modelUrl)
@@ -122,23 +126,39 @@ export class JewelryViewer extends THREE.EventDispatcher {
   // ── Visibility ────────────────────────────────────────────────────────────
   show(delay = 0) {
     this.group.quaternion.identity()
-    this.group.scale.setScalar(1)
     this.group.visible = true
     this._particles?.show()
 
     if (this._particles) {
+      // Start fully transparent and scaled down so the reveal is unmistakable.
+      // Scale drives the Three.js transform matrix (guaranteed to update every
+      // render), while the opacity tween softens the particle edges.
       this._particles.points.material.opacity = 0
+      this.group.scale.setScalar(0.82)
+
+      gsap.to(this.group.scale, {
+        x: 1, y: 1, z: 1,
+        duration: 1.8,
+        delay,
+        ease: 'power1.out',
+      })
       gsap.to(this._particles.points.material, {
         opacity: 0.92,
-        duration: 0.9,
+        duration: 1.8,
         delay,
-        ease: 'power2.out',
+        ease: 'power1.out',
+        onUpdate: () => { this._particles.points.material.needsUpdate = false },
       })
+    } else {
+      this.group.scale.setScalar(1)
     }
   }
 
   hide(onComplete) {
+    // Kill any in-progress show tweens so they don't fight the hide
+    gsap.killTweensOf(this.group.scale)
     if (this._particles) {
+      gsap.killTweensOf(this._particles.points.material)
       gsap.to(this._particles.points.material, {
         opacity: 0,
         duration: 0.45,
@@ -146,11 +166,13 @@ export class JewelryViewer extends THREE.EventDispatcher {
         onComplete: () => {
           this._particles.hide()
           this.group.visible = false
+          this.group.scale.setScalar(1)   // reset so next show() starts from 0.82
           onComplete?.()
         }
       })
     } else {
       this.group.visible = false
+      this.group.scale.setScalar(1)
       onComplete?.()
     }
   }

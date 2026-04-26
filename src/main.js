@@ -18,27 +18,82 @@ const CATALOG = [
   {
     name: 'CRESCENT GRADIENT', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Crescent Low Poly.glb',
-    images: [null, null, null]
+    images: [null, null, null],
+    specs: [
+      'MATERIAL — 925 STERLING SILVER',
+      'FINISH — GRADIENT OXIDISATION',
+      'FORM — OPEN CRESCENT',
+      'DIMENSIONS — 32 × 18 MM',
+      'WEIGHT — 4.2 G',
+      'COLLECTION — INVSBL',
+    ]
   },
   {
     name: 'HALF CRESCENT GRADIENT', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Crescent Half-Gradient Low Poly.glb',
-    images: [null, null, null]
+    images: [null, null, null],
+    specs: [
+      'MATERIAL — 925 STERLING SILVER',
+      'FINISH — HALF GRADIENT OXIDISATION',
+      'FORM — HALF CRESCENT',
+      'DIMENSIONS — 28 × 14 MM',
+      'WEIGHT — 3.6 G',
+      'COLLECTION — INVSBL',
+    ]
   },
   {
     name: 'CLOUD BENGAL', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Cloud Bengal Low Poly.glb',
-    images: [null, null, null]
+    images: [null, null, null],
+    specs: [
+      'MATERIAL — 925 STERLING SILVER',
+      'FINISH — BRUSHED MATTE',
+      'FORM — CLOUD SILHOUETTE',
+      'DIMENSIONS — 38 × 22 MM',
+      'WEIGHT — 5.8 G',
+      'COLLECTION — INVSBL',
+    ]
   },
   {
     name: 'HYPERCUBE', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Hypercube LowPoly.glb',
-    images: [null, null, null]
+    images: [null, null, null],
+    specs: [
+      'MATERIAL — 925 STERLING SILVER',
+      'FINISH — HIGH POLISH',
+      'FORM — TESSERACT PROJECTION',
+      'DIMENSIONS — 24 × 24 MM',
+      'WEIGHT — 6.1 G',
+      'COLLECTION — INVSBL',
+    ]
   },
   {
     name: 'EPSILON', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Epsilon Low Poly.glb',
-    images: [null, null, null]
+    images: [null, null, null],
+    specs: [
+      'MATERIAL — 925 STERLING SILVER',
+      'FINISH — SATIN',
+      'FORM — EPSILON SYMBOL',
+      'DIMENSIONS — 20 × 30 MM',
+      'WEIGHT — 3.9 G',
+      'COLLECTION — INVSBL',
+    ]
+  },
+  {
+    name: 'ARCHIVE INDEX', collection: 'INVSBL WRLD', price: '',
+    modelUrl: null,
+    images: [null, null, null],
+    toc: true,
+    specsHeader: 'ALL WORKS',
+    nameFooter: '[ ARCHIVE ]',
+    specs: [
+      '01 — CRESCENT GRADIENT',
+      '02 — HALF CRESCENT GRADIENT',
+      '03 — CLOUD BENGAL',
+      '04 — HYPERCUBE',
+      '05 — EPSILON',
+    ]
   }
 ]
 
@@ -74,14 +129,21 @@ let page            = 'landing'
 let isTransitioning = false   // prevents double-trigger
 let shop            = null
 let ren             = null    // WebGL renderer, created lazily
+let _renderRafId    = null    // tracks the active render-loop RAF so we can cancel it
 const hud           = new HUD()
+
+// TOC item — clicking a spec line fires 'toc-goto'; navigate to that item
+document.addEventListener('toc-goto', e => {
+  if (shop) shop.goTo(e.detail.index)
+})
 
 // ── LandingScene — 3D letter renderer ────────────────────────────────────────
 const landingGL = document.getElementById('landing-gl')
 const landingScene = new LandingScene(landingGL)
 landingScene.load().then(() => {
   landingScene.revealAll(() => {
-    scrollCue.classList.add('visible')
+    scrollCue.style.opacity = ''   // remove inline override so CSS class can work
+    requestAnimationFrame(() => scrollCue.classList.add('visible'))
   })
 })
 
@@ -117,16 +179,32 @@ async function enterShop() {
   })
 
   // ── Start loading WebGL & models immediately (runs while letters exit) ────
+  // Two events must both happen before we reveal the 3D object:
+  //   A) models finish loading   B) shop slide-in animation completes
+  // Whichever arrives second calls revealCurrent() so the fade-in is always
+  // visible to the user rather than happening off-screen during the transition.
+  let _modelsReady    = false
+  let _shopAnimDone   = false
+  const _maybeReveal  = () => {
+    if (_modelsReady && _shopAnimDone) shop?.revealCurrent()
+  }
+
   try {
+    // Always restore canvas visibility (it was hidden by exitShop)
+    webglEl.style.display = 'block'
+
     if (!ren) {
-      webglEl.style.display = 'block'
       ren = new Renderer(webglEl)
+    }
+
+    // Only start a new render loop if one isn't already running
+    if (!_renderRafId) {
       const tick = () => {
-        requestAnimationFrame(tick)
         if (shop) shop.update(_mouseNDC)
         ren.render()
+        _renderRafId = requestAnimationFrame(tick)
       }
-      tick()
+      _renderRafId = requestAnimationFrame(tick)
     }
     const interactionTarget = document.querySelector('.shop-canvas-container')
     shop = new ShopScene(ren.renderer, ren.scene, ren.camera, CATALOG, interactionTarget)
@@ -144,6 +222,8 @@ async function enterShop() {
           { opacity: 1, y: 0, duration: 0.5, stagger: 0.09, ease: 'power2.out' }
         )
       })
+      _modelsReady = true
+      _maybeReveal()
     }).catch(err => {
       console.error('[INVSBL WRLD] Shop load error:', err)
     })
@@ -182,6 +262,10 @@ async function enterShop() {
           )
           // Boot the HUD panels after the shop has fully slid into view
           if (shop) hud.show(shop.currentItem, shop.current)
+          // Signal that the shop is visible — triggers 3D object fade-in
+          // (if models are already loaded) or arms the flag for when they do load
+          _shopAnimDone = true
+          _maybeReveal()
         }
       })
     }
@@ -209,6 +293,8 @@ function exitShop() {
     y: 40, opacity: 0,
     duration: 0.9, ease: 'power3.inOut',
     onComplete: () => {
+      // Stop the render loop before disposing — prevents stale RAF accumulation
+      if (_renderRafId) { cancelAnimationFrame(_renderRafId); _renderRafId = null }
       shop?.dispose()
       shop = null
       shopEl.style.display  = 'none'
@@ -223,7 +309,10 @@ function exitShop() {
     duration: 0.9, ease: 'power3.inOut',
     onComplete: () => {
       isTransitioning = false
-      landingScene.enterLetters()
+      landingScene.enterLetters(() => {
+        scrollCue.style.opacity = ''
+        requestAnimationFrame(() => scrollCue.classList.add('visible'))
+      })
     }
   })
 }

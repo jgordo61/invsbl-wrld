@@ -12,12 +12,6 @@
     <!-- ── Landing ──────────────────────────────────────────────────────── -->
     <section id="landing">
 
-      <!-- Glitch overlay slices — driven by CSS vars + JS -->
-      <div id="glitch-overlay" aria-hidden="true">
-        <div class="glitch-slice" id="gs1"></div>
-        <div class="glitch-slice" id="gs2"></div>
-        <div class="glitch-slice" id="gs3"></div>
-      </div>
 
       <!-- 3D letter canvas — sits behind the CSS scramble spans -->
       <canvas id="landing-gl"></canvas>
@@ -54,16 +48,16 @@
 
       <div class="shop-canvas-container"></div>
 
-      <div class="shop-info">
+      <div class="shop-info" style="display:none">
         <div class="item-meta">
-          <p class="item-collection" id="itemCollection">COLLECTION</p>
-          <h2 class="item-name" id="itemName">LOADING</h2>
-          <p class="item-price" id="itemPrice">—</p>
+          <p class="item-collection" id="itemCollection"></p>
+          <h2 class="item-name" id="itemName"></h2>
+          <p class="item-price" id="itemPrice"></p>
         </div>
       </div>
 
-      <!-- Add to cart — fixed bottom right -->
-      <button class="add-to-cart-btn" id="addToCart">ADD TO CART</button>
+      <!-- Add to cart — kept in DOM for main.js wiring but hidden; the HUD cart panel is the visible button -->
+      <button class="add-to-cart-btn" id="addToCart" style="display:none">ADD TO CART</button>
 
       <div class="dots-nav">
         <div class="dots-arrow dots-arrow--up"></div>

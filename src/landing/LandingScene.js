@@ -12,7 +12,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 const LETTER_HEIGHT = 1.0     // world-units each letter is normalised to
 const LETTER_GAP    = 0.08    // world-units between letters
 const ROW_GAP       = 1.5     // world-units between the two row centres
-const PADDING       = 1.2     // fractional padding around content for camera fit
+const PADDING       = 0.81    // fractional padding around content for camera fit (~30% larger text)
 
 const GLB_BASE = '/models/BML%20Typeset%20GLB/Uppercase%20'
 
@@ -104,6 +104,58 @@ export class LandingScene {
     this._loader = new GLTFLoader()
     this._loader.setDRACOLoader(draco)
 
+    // ── Manual two-pass glitch setup ─────────────────────────────────────────
+    // Pass 1: scene → render target (preserves alpha)
+    // Pass 2: render target → screen via glitch ShaderMaterial (only when active)
+    this._glitchRT = new THREE.WebGLRenderTarget(
+      window.innerWidth  * Math.min(window.devicePixelRatio, 2),
+      window.innerHeight * Math.min(window.devicePixelRatio, 2),
+      { format: THREE.RGBAFormat, stencilBuffer: false }
+    )
+
+    // Full-screen quad for the blit pass
+    this._glitchCam  = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    this._glitchScene = new THREE.Scene()
+    this._glitchMat  = new THREE.ShaderMaterial({
+      uniforms: {
+        tDiffuse:  { value: this._glitchRT.texture },
+        uStrength: { value: 0.0 },
+        uSeed:     { value: 0.0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
+      `,
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float uStrength;
+        uniform float uSeed;
+        varying vec2 vUv;
+        float rand(float n) {
+          return fract(sin(n * 127.1 + uSeed * 311.7) * 43758.5453);
+        }
+        void main() {
+          vec2 uv = vUv;
+          if (uStrength > 0.001) {
+            float band   = floor(uv.y * 28.0);
+            float active = step(0.55, rand(band));
+            float offset = (rand(band + 33.0) - 0.5) * 0.18 * uStrength * active;
+            uv.x = clamp(uv.x + offset, 0.0, 1.0);
+          }
+          gl_FragColor = texture2D(tDiffuse, uv);
+        }
+      `,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    })
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this._glitchMat)
+    this._glitchScene.add(quad)
+
+    // Glitch scheduler state
+    this._glitchTimer    = null
+    this._glitchStrength = 0
+
     this._flickerTimers = []
     this._animTimers    = []   // setTimeout IDs for exit/enter sequences
     this._animating     = false
@@ -111,6 +163,7 @@ export class LandingScene {
     window.addEventListener('resize', this._boundResize)
     this._onResize()
     this._startLoop()
+    this._scheduleGlitch()
   }
 
   // ── Load all GLBs and build scene ─────────────────────────────────────────
@@ -187,12 +240,12 @@ export class LandingScene {
   }
 
   // ── Fade all letters in, left→right (returning from shop) ────────────────
-  enterLetters() {
+  enterLetters(onComplete) {
     const sequence = [
       ...this._letters['INVSBL'].filter(Boolean),
       ...this._letters['WRLD'].filter(Boolean),
     ]
-    this._fadeSequence(sequence, 0, 1)
+    this._fadeSequence(sequence, 0, 1, onComplete)
   }
 
   // ── Reset all letters to hidden instantly ────────────────────────────────
@@ -417,7 +470,10 @@ export class LandingScene {
 
   // ── Renderer resize ────────────────────────────────────────────────────────
   _onResize() {
-    this._renderer.setSize(window.innerWidth, window.innerHeight)
+    const w = window.innerWidth, h = window.innerHeight
+    const pr = Math.min(window.devicePixelRatio, 2)
+    this._renderer.setSize(w, h)
+    this._glitchRT?.setSize(w * pr, h * pr)
     this._updateCameraFrustum()
   }
 
@@ -439,9 +495,50 @@ export class LandingScene {
         pivot.rotation.y = Math.sin(t * anim.tiltYSpeed * Math.PI * 2 + anim.tiltYPhase) * anim.tiltYAmp
       })
 
-      this._renderer.render(this._scene, this._camera)
+      // Decay glitch strength each frame
+      if (this._glitchStrength > 0) {
+        this._glitchStrength = Math.max(0, this._glitchStrength - 0.04)
+        this._glitchMat.uniforms.uStrength.value = this._glitchStrength
+      }
+
+      if (this._glitchStrength > 0.001) {
+        // Pass 1: render scene → offscreen RT
+        this._renderer.setRenderTarget(this._glitchRT)
+        this._renderer.clear(true, true, true)
+        this._renderer.render(this._scene, this._camera)
+        // Pass 2: blit RT → canvas with glitch shader
+        this._renderer.setRenderTarget(null)
+        this._renderer.clear(true, true, true)
+        this._renderer.render(this._glitchScene, this._glitchCam)
+      } else {
+        // Normal render — direct to canvas, alpha preserved
+        this._renderer.setRenderTarget(null)
+        this._renderer.render(this._scene, this._camera)
+      }
     }
     loop()
+  }
+
+  // ── Glitch scheduler ───────────────────────────────────────────────────────
+  _scheduleGlitch() {
+    const delay = 800 + Math.random() * 2400
+    this._glitchTimer = setTimeout(() => {
+      this._fireGlitch()
+      this._scheduleGlitch()
+    }, delay)
+  }
+
+  _fireGlitch() {
+    const bursts = 1 + Math.floor(Math.random() * 3)
+    let t = 0
+    for (let i = 0; i < bursts; i++) {
+      setTimeout(() => {
+        this._glitchPass.uniforms.uSeed.value = Math.random() * 100
+        this._glitchStrength = 0.6 + Math.random() * 0.4
+        this._glitchPass.uniforms.uStrength.value = this._glitchStrength
+      }, t)
+      t += 60 + Math.random() * 80
+    }
   }
 
   _loadGLB(url) {
@@ -453,9 +550,12 @@ export class LandingScene {
   dispose() {
     this._disposed = true
     cancelAnimationFrame(this._animFrame)
+    clearTimeout(this._glitchTimer)
     this._animTimers.forEach(clearTimeout)
     this._flickerTimers.forEach(clearTimeout)
     window.removeEventListener('resize', this._boundResize)
+    this._glitchRT.dispose()
+    this._glitchMat.dispose()
     this._renderer.dispose()
   }
 }

@@ -35,9 +35,16 @@ export class ShopScene extends THREE.EventDispatcher {
       this.items.push(viewer)
       onProgress?.(i + 1, this.catalog.length)
     }
-    this.items[0].show()
+    // Don't call show() here — main.js coordinates the reveal so the fade-in
+    // starts only once the shop slide-in animation is actually complete.
     this.items[0].enableInteraction(this.domElement)
     return this
+  }
+
+  // Called by main.js when the shop entrance animation finishes.
+  // Safe to call multiple times — JewelryViewer.show() is idempotent.
+  revealCurrent() {
+    this.items[this.current]?.show(0)
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
