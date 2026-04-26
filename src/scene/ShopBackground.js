@@ -101,9 +101,9 @@ export class ShopBackground {
         float dist    = length(offset);
         float dotMask = 1.0 - smoothstep(radius - soft, radius + soft, dist);
 
-        // Black dots on transparent background — darker color, reduced alpha.
+        // Black dots on transparent background.
         // CSS blur on the canvas element will soften them into a halo.
-        gl_FragColor = vec4(0.0, 0.0, 0.0, dotMask * 0.06);
+        gl_FragColor = vec4(0.0, 0.0, 0.0, dotMask * 0.35);
       }
     `
 
