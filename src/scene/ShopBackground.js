@@ -101,8 +101,8 @@ export class ShopBackground {
         float dist    = length(offset);
         float dotMask = 1.0 - smoothstep(radius - soft, radius + soft, dist);
 
-        // Radial falloff: near-black core that drops off tightly.
-        float centerFalloff = 1.0 - smoothstep(0.0, radius * 0.6, dist);
+        // Very soft radial falloff — dark core bleeds gently across the full dot.
+        float centerFalloff = 1.0 - smoothstep(0.0, radius * 5.0, dist);
         float alpha = dotMask * mix(0.06, 0.99, centerFalloff);
 
         gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);
