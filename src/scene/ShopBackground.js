@@ -101,9 +101,18 @@ export class ShopBackground {
         float dist    = length(offset);
         float dotMask = 1.0 - smoothstep(radius - soft, radius + soft, dist);
 
-        // Very soft radial falloff — dark core bleeds gently across the full dot.
+        // Layer 1 — soft blooming dots
         float centerFalloff = 1.0 - smoothstep(0.0, radius * 9.0, dist);
-        float alpha = dotMask * mix(0.06, 0.99, centerFalloff);
+        float alpha1 = dotMask * mix(0.06, 0.99, centerFalloff);
+
+        // Layer 2 — small plain black dots, same grid, no falloff
+        float radius2 = 0.9;
+        float soft2   = 0.5;
+        float dotMask2 = 1.0 - smoothstep(radius2 - soft2, radius2 + soft2, dist);
+        float alpha2   = dotMask2 * 0.90;
+
+        // Composite both layers (Porter-Duff over)
+        float alpha = 1.0 - (1.0 - alpha1) * (1.0 - alpha2);
 
         gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);
       }
