@@ -177,17 +177,6 @@ html, body {
    SHOP
    ════════════════════════════════════════════════════════════════════════════ */
 
-/* Shop dot-field background — sits below the Three.js canvas */
-#shop-bg {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;   /* behind #webgl (z:0) and #shop (z:10) */
-  display: none;
-  pointer-events: none;
-  filter: blur(3px);
-}
 
 #webgl {
   position: fixed;

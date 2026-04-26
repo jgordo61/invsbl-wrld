@@ -4,7 +4,6 @@ import { LandingScene }    from './landing/LandingScene.js'
 import { Renderer }        from './scene/Renderer.js'
 import { ShopScene }       from './scene/ShopScene.js'
 import { HUD }             from './scene/HUD.js'
-import { ShopBackground }  from './scene/ShopBackground.js'
 import './style.css'
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -104,7 +103,6 @@ const CATALOG = [
 const landingEl  = document.getElementById('landing')
 const shopEl     = document.getElementById('shop')
 const webglEl    = document.getElementById('webgl')
-const shopBgEl   = document.getElementById('shop-bg')
 const scrollCue  = document.getElementById('scrollCue')
 const navBack    = document.getElementById('navBack')
 const itemDots   = document.getElementById('itemDots')
@@ -133,9 +131,6 @@ let shop            = null
 let ren             = null    // WebGL renderer, created lazily
 let _renderRafId    = null    // tracks the active render-loop RAF so we can cancel it
 const hud           = new HUD()
-
-// Dot-field background — created once, shown/hidden with the shop
-const shopBg = new ShopBackground(shopBgEl)
 
 // TOC item — clicking a spec line fires 'toc-goto'; navigate to that item
 document.addEventListener('toc-goto', e => {
@@ -182,10 +177,6 @@ async function enterShop() {
     dot.addEventListener('click', () => shop?.goTo(i))
     itemDots.appendChild(dot)
   })
-
-  // ── Show dot-field background ────────────────────────────────────────────
-  shopBgEl.style.display = 'block'
-  shopBg.start()
 
   // ── Start loading WebGL & models immediately (runs while letters exit) ────
   // Two events must both happen before we reveal the 3D object:
@@ -308,8 +299,6 @@ function exitShop() {
       shop = null
       shopEl.style.display   = 'none'
       webglEl.style.display  = 'none'
-      shopBg.stop()
-      shopBgEl.style.display = 'none'
       gsap.set(shopEl, { y: 0, opacity: 1 })
     }
   })
