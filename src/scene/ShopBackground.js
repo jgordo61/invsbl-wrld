@@ -90,8 +90,8 @@ export class ShopBackground {
       void main () {
         // halved dot count (×√2 pitch) → 56 * 1.414 ≈ 79px
         float pitch  = 79.0;
-        // 10% smaller → 3.2 * 0.9 = 2.88px
-        float radius = 2.88;
+        // 20% smaller → 2.88 * 0.8 = 2.3px
+        float radius = 2.3;
         float soft   = 1.0;
 
         vec2 px     = gl_FragCoord.xy;
@@ -101,9 +101,10 @@ export class ShopBackground {
         float dist    = length(offset);
         float dotMask = 1.0 - smoothstep(radius - soft, radius + soft, dist);
 
-        // Radial falloff: dense black at center, fading toward the edge
-        float centerFalloff = 1.0 - smoothstep(0.0, radius, dist);
-        float alpha = dotMask * mix(0.08, 0.55, centerFalloff);
+        // Radial falloff: dense black at center, softly fading toward edge.
+        // Extended range (radius * 2.5) gives a long gentle gradient.
+        float centerFalloff = 1.0 - smoothstep(0.0, radius * 2.5, dist);
+        float alpha = dotMask * mix(0.06, 0.80, centerFalloff);
 
         gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);
       }
