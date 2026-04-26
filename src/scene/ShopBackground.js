@@ -90,9 +90,9 @@ export class ShopBackground {
       void main () {
         // 50% fewer rows → pitch doubled from 28 to 56px
         float pitch  = 56.0;
-        // 100% larger dots → radius doubled from 2 to 4px
-        float radius = 4.0;
-        float soft   = 1.2;
+        // 20% smaller → 4 * 0.8 = 3.2px
+        float radius = 3.2;
+        float soft   = 1.0;
 
         vec2 px     = gl_FragCoord.xy;
         vec2 cell   = mod(px, pitch);
@@ -101,9 +101,11 @@ export class ShopBackground {
         float dist    = length(offset);
         float dotMask = 1.0 - smoothstep(radius - soft, radius + soft, dist);
 
-        // Black dots on transparent background.
-        // CSS blur on the canvas element will soften them into a halo.
-        gl_FragColor = vec4(0.0, 0.0, 0.0, dotMask * 0.35);
+        // Radial falloff: dense black at center, fading toward the edge
+        float centerFalloff = 1.0 - smoothstep(0.0, radius, dist);
+        float alpha = dotMask * mix(0.08, 0.55, centerFalloff);
+
+        gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);
       }
     `
 
