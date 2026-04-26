@@ -105,9 +105,9 @@ export class ShopBackground {
         float centerFalloff = 1.0 - smoothstep(0.0, radius * 9.0, dist);
         float alpha1 = dotMask * mix(0.06, 0.99, centerFalloff);
 
-        // Layer 2 — small plain black dots, same grid, no falloff
-        float radius2 = 0.9;
-        float soft2   = 0.5;
+        // Layer 2 — plain black dots, same grid, no falloff
+        float radius2 = 3.0;
+        float soft2   = 0.8;
         float dotMask2 = 1.0 - smoothstep(radius2 - soft2, radius2 + soft2, dist);
         float alpha2   = dotMask2 * 0.90;
 
