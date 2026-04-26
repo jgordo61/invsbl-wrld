@@ -1,8 +1,9 @@
 /**
  * ShopBackground
  *
- * Renders a regular grid of faint, perfectly circular black dots
- * onto a dedicated fullscreen canvas that sits behind the shop UI.
+ * Renders a regular grid of perfectly circular black dots onto a
+ * dedicated transparent fullscreen canvas behind the shop UI.
+ * Gaussian blur is applied via CSS filter on the canvas element.
  */
 export class ShopBackground {
   constructor (canvas) {
@@ -10,10 +11,17 @@ export class ShopBackground {
     this._raf    = null
 
     const gl = canvas.getContext('webgl', {
-      alpha: false, antialias: false, depth: false, stencil: false,
+      alpha: true,   // transparent so white body shows through between dots
+      antialias: false,
+      depth: false,
+      stencil: false,
+      premultipliedAlpha: false,
     })
     if (!gl) { console.warn('[ShopBackground] WebGL not available'); return }
     this._gl = gl
+
+    // Transparent clear
+    gl.clearColor(0, 0, 0, 0)
 
     this._resize()
     window.addEventListener('resize', this._resize.bind(this))
@@ -35,18 +43,10 @@ export class ShopBackground {
 
     this._uRes = gl.getUniformLocation(this._program, 'uResolution')
 
-    // Draw once — static pattern, no animation loop needed
     this._drawOnce()
   }
 
-  // ── Public API ──────────────────────────────────────────────────────────────
-
-  /** Call when the shop becomes visible. */
-  start () {
-    // Pattern is static; just ensure one draw has happened (already done in constructor
-    // and after each resize). Nothing to loop.
-  }
-
+  start ()   {}
   stop ()    {}
   dispose () {
     window.removeEventListener('resize', this._resize.bind(this))
@@ -55,8 +55,6 @@ export class ShopBackground {
       this._gl.deleteBuffer(this._buf)
     }
   }
-
-  // ── Internal ────────────────────────────────────────────────────────────────
 
   _resize () {
     const dpr = Math.min(window.devicePixelRatio, 2)
@@ -71,6 +69,7 @@ export class ShopBackground {
   _drawOnce () {
     const gl = this._gl
     if (!gl || !this._program) return
+    gl.clear(gl.COLOR_BUFFER_BIT)
     gl.useProgram(this._program)
     gl.uniform2f(this._uRes, this._canvas.width, this._canvas.height)
     gl.bindBuffer(gl.ARRAY_BUFFER, this._buf)
@@ -89,26 +88,22 @@ export class ShopBackground {
       uniform vec2 uResolution;
 
       void main () {
-        // Physical dot pitch in pixels — same in x and y → square grid
-        float pitch = 28.0;
+        // 50% fewer rows → pitch doubled from 28 to 56px
+        float pitch  = 56.0;
+        // 100% larger dots → radius doubled from 2 to 4px
+        float radius = 4.0;
+        float soft   = 1.2;
 
-        // Dot radius and softness in pixels
-        float radius = 2.0;
-        float soft   = 0.8;
-
-        // Position of this fragment in pixel space
-        vec2 px = gl_FragCoord.xy;
-
-        // Nearest dot centre
+        vec2 px     = gl_FragCoord.xy;
         vec2 cell   = mod(px, pitch);
-        vec2 offset = cell - pitch * 0.5;  // (-pitch/2 .. pitch/2)
+        vec2 offset = cell - pitch * 0.5;
 
         float dist    = length(offset);
         float dotMask = 1.0 - smoothstep(radius - soft, radius + soft, dist);
 
-        // Very faint black on white
-        float lum = 1.0 - dotMask * 0.10;
-        gl_FragColor = vec4(lum, lum, lum, 1.0);
+        // Black dots on transparent background — darker color, reduced alpha.
+        // CSS blur on the canvas element will soften them into a halo.
+        gl_FragColor = vec4(0.0, 0.0, 0.0, dotMask * 0.06);
       }
     `
 
