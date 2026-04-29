@@ -132,9 +132,6 @@ export class MobileShop {
   }
 
   // ── Gallery rendering ───────────────────────────────────────────────────────
-  // Uses the same .hud-gpanel DOM structure as the desktop HUD gallery so all
-  // existing CSS (clip-path, drop-shadow, scanlines, corner brackets, label,
-  // boot animation) applies without any duplication.
 
   _renderGallery(item) {
     this._galEl.innerHTML = ''
@@ -142,37 +139,26 @@ export class MobileShop {
     while (imgs.length < 3) imgs.push(null)
 
     imgs.forEach((url, i) => {
-      const panel = document.createElement('div')
-      panel.className = 'hud-gpanel'
-      panel.innerHTML = `
-        <div class="gpanel-inner">
-          ${url
-            ? `<img src="${url}" alt="" class="gpanel-img" />`
-            : `<div class="hud-nosignal">NO SIGNAL</div>`
-          }
-          <div class="hud-corner hud-corner--tl"></div>
-          <div class="hud-corner hud-corner--tr"></div>
-          <div class="hud-corner hud-corner--bl"></div>
-          <div class="hud-corner hud-corner--br"></div>
-          <div class="hud-label">
-            [ VIEW·${String(i + 1).padStart(2, '0')} ]
-            <span class="hud-cursor">_</span>
-          </div>
-        </div>
-      `
+      const thumb = document.createElement('div')
+      thumb.className = 'mob-thumb'
 
-      // Boot-glitch animation — same stagger as desktop gallery
-      const inner = panel.querySelector('.gpanel-inner')
-      if (inner) {
-        inner.style.animationDelay = (i * 0.12) + 's'
-        inner.classList.add('panel-booting')
-        inner.addEventListener('animationend', () => {
-          inner.classList.remove('panel-booting')
-          inner.style.animationDelay = ''
-        }, { once: true })
+      if (url) {
+        const img = document.createElement('img')
+        img.src = url; img.alt = ''; img.className = 'mob-thumb-img'
+        thumb.appendChild(img)
+      } else {
+        const ns = document.createElement('div')
+        ns.className = 'mob-thumb-nosig'
+        ns.textContent = 'NO·SIGNAL'
+        thumb.appendChild(ns)
       }
 
-      this._galEl.appendChild(panel)
+      const label = document.createElement('div')
+      label.className = 'mob-thumb-label'
+      label.textContent = `[ VIEW·${String(i + 1).padStart(2, '0')} ]`
+      thumb.appendChild(label)
+
+      this._galEl.appendChild(thumb)
     })
   }
 
