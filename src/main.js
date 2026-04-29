@@ -7,8 +7,9 @@ import { HUD }             from './scene/HUD.js'
 import { MobileShop }      from './scene/MobileShop.js'
 import './style.css'
 
-// True on phones / narrow tablets — evaluated once at load
-const IS_MOBILE = window.innerWidth <= 768
+// True on phones regardless of orientation — uses the shorter dimension so
+// a phone rotated to landscape (e.g. 844×390) still gets the mobile layout.
+const IS_MOBILE = Math.min(window.innerWidth, window.innerHeight) <= 768
 
 // ════════════════════════════════════════════════════════════════════════════
 //  CATALOG — add your jewelry pieces here.

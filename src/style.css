@@ -1145,7 +1145,7 @@ html, body {
 * { user-select: none; -webkit-user-select: none; }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   MOBILE SHOP OVERLAY  (MobileShop.js)  — max-width: 768px only
+   MOBILE SHOP OVERLAY  (MobileShop.js)  — portrait ≤768px + landscape phones
    Three fixed zones stacked top-to-bottom:
      gallery  0–25vh   (opaque, horizontal scroll)
      spacer  25–75vh   (transparent — 3D canvas shows through)
@@ -1153,7 +1153,7 @@ html, body {
    The 3D canvas renders the model centred at 50vh (full-screen canvas),
    so the 25–75vh spacer perfectly frames it with no overlap.
    ════════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
 
   /* Root — pointer-events:none so the 3D spacer zone passes touches
      straight through to the WebGL canvas. !important beats #shop > * rule. */
@@ -1383,12 +1383,12 @@ html, body {
     animation: cuePulse 2.2s ease-in-out infinite;
   }
 
-} /* end @media (max-width: 768px) — MOBILE SHOP */
+} /* end mobile shop media query */
 
 /* ════════════════════════════════════════════════════════════════════════════
-   MOBILE  ≤ 768 px
+   MOBILE  ≤ 768 px  OR  phone in landscape (coarse pointer, height ≤ 500 px)
    ════════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
 
   /* ── Safe-area padding for iOS notch / home indicator ─────────────────────── */
   #shop    { padding: 1.25rem 1.25rem 0.75rem 1.25rem; }
