@@ -1145,242 +1145,245 @@ html, body {
 * { user-select: none; -webkit-user-select: none; }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   MOBILE SHOP OVERLAY  (MobileShop.js)
-   Three fixed zones: gallery (top) · transparent 3D spacer · info drawer (bottom)
-   pointer-events:none on root so the spacer passes touches to the 3D canvas.
+   MOBILE SHOP OVERLAY  (MobileShop.js)  — max-width: 768px only
+   Three fixed zones stacked top-to-bottom:
+     gallery  0–25vh   (opaque, horizontal scroll)
+     spacer  25–75vh   (transparent — 3D canvas shows through)
+     info    75–100vh  (opaque, internally scrollable)
+   The 3D canvas renders the model centred at 50vh (full-screen canvas),
+   so the 25–75vh spacer perfectly frames it with no overlap.
    ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
 
-/* Root — pointer-events:none so the 3D spacer zone passes touches
-   straight through to the WebGL canvas. !important beats #shop > * rule. */
-#mob-shop {
-  position: fixed;
-  inset: 0;
-  z-index: 15;
-  pointer-events: none !important;
-}
+  /* Root — pointer-events:none so the 3D spacer zone passes touches
+     straight through to the WebGL canvas. !important beats #shop > * rule. */
+  #mob-shop {
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    pointer-events: none !important;
+  }
 
-@media (min-width: 769px) {
-  #mob-shop { display: none !important; }
-}
+  /* ── Gallery strip — fixed at top, horizontal scroll ──────────────────── */
+  #mob-gallery {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 25vh;
+    background: #ffffff;
+    border-bottom: 0.5px solid rgba(10,10,10,0.07);
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    padding: 0.75rem 1.25rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scroll-snap-type: x mandatory;
+    pointer-events: auto;
+    z-index: 16;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  #mob-gallery::-webkit-scrollbar { display: none; }
 
-/* ── Gallery strip — fixed at top, horizontal scroll ────────────────────── */
-#mob-gallery {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 25vh;
-  background: #ffffff;
-  border-bottom: 0.5px solid rgba(10,10,10,0.07);
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  padding: 0.75rem 1.25rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  scroll-snap-type: x mandatory;
-  pointer-events: auto;
-  z-index: 16;
-  box-sizing: border-box;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-#mob-gallery::-webkit-scrollbar { display: none; }
+  .mob-thumb {
+    flex: 0 0 auto;
+    width: 120px;
+    height: 100%;
+    scroll-snap-align: center;
+    position: relative;
+    clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
+    background: rgba(10,10,10,0.07);
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(10,10,10,0.06) 0px,
+      rgba(10,10,10,0.06) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    filter: drop-shadow(3px 5px 8px rgba(10,10,10,0.50));
+  }
 
-.mob-thumb {
-  flex: 0 0 auto;
-  width: 120px;
-  height: 100%;
-  scroll-snap-align: center;
-  position: relative;
-  clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
-  background: rgba(10,10,10,0.07);
-  background-image: repeating-linear-gradient(
-    0deg,
-    rgba(10,10,10,0.06) 0px,
-    rgba(10,10,10,0.06) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  filter: drop-shadow(3px 5px 8px rgba(10,10,10,0.50));
-}
+  .mob-thumb-img {
+    position: absolute;
+    inset: 0 0 18px 0;
+    width: 100%;
+    height: calc(100% - 18px);
+    object-fit: cover;
+    filter: grayscale(60%) sepia(35%) hue-rotate(170deg) brightness(1.08) contrast(1.05);
+  }
 
-.mob-thumb-img {
-  position: absolute;
-  inset: 0 0 18px 0;
-  width: 100%;
-  height: calc(100% - 18px);
-  object-fit: cover;
-  filter: grayscale(60%) sepia(35%) hue-rotate(170deg) brightness(1.08) contrast(1.05);
-}
+  .mob-thumb-nosig {
+    position: absolute;
+    inset: 0 0 18px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    font-size: 6.5px;
+    letter-spacing: 0.25em;
+    color: rgba(10,10,10,0.40);
+  }
 
-.mob-thumb-nosig {
-  position: absolute;
-  inset: 0 0 18px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Courier New', monospace;
-  font-size: 6.5px;
-  letter-spacing: 0.25em;
-  color: rgba(10,10,10,0.40);
-}
+  .mob-thumb-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 2px 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 7px;
+    letter-spacing: 0.18em;
+    color: rgba(10,10,10,0.50);
+    line-height: 1;
+  }
 
-.mob-thumb-label {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 2px 5px;
-  font-family: 'Courier New', monospace;
-  font-size: 7px;
-  letter-spacing: 0.18em;
-  color: rgba(10,10,10,0.50);
-  line-height: 1;
-}
+  /* ── Transparent 3D spacer — 25vh→75vh, touches reach canvas ───────────── */
+  #mob-3d-spacer {
+    position: fixed;
+    top: 25vh; left: 0; right: 0;
+    height: 50vh;            /* 25 + 50 = 75vh — matches model extent */
+    pointer-events: none;
+    background: transparent;
+    z-index: 16;
+  }
 
-/* ── Transparent 3D spacer — touches pass through to canvas ─────────────── */
-#mob-3d-spacer {
-  position: fixed;
-  top: 25vh; left: 0; right: 0;
-  height: 33vh;
-  pointer-events: none;
-  background: transparent;
-  z-index: 16;
-}
+  /* ── Info drawer — fixed at bottom 25vh, starts at 75vh ────────────────── */
+  #mob-info {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 25vh;            /* starts at 75vh — clears the 3D model */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    pointer-events: auto;
+    z-index: 16;
+    background: #ffffff;
+    border-top: 0.5px solid rgba(10,10,10,0.10);
+    padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(10,10,10,0.04) 0px,
+      rgba(10,10,10,0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+  #mob-info::-webkit-scrollbar { display: none; }
 
-/* ── Info drawer — fixed at bottom, internally scrollable ───────────────── */
-#mob-info {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: 42vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  pointer-events: auto;
-  z-index: 16;
-  background: #ffffff;
-  border-top: 0.5px solid rgba(10,10,10,0.10);
-  padding: 1.25rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom));
-  box-sizing: border-box;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  background-image: repeating-linear-gradient(
-    0deg,
-    rgba(10,10,10,0.04) 0px,
-    rgba(10,10,10,0.04) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-}
-#mob-info::-webkit-scrollbar { display: none; }
+  /* TOC item: no gallery/spacer, give the drawer more height */
+  #mob-info.toc-mode { height: 65vh; }
 
-/* TOC item: no gallery above, give the drawer more height */
-#mob-info.toc-mode { height: 65vh; }
+  /* ── Name block ──────────────────────────────────────────────────────────── */
+  .mob-collection {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.45em;
+    color: rgba(10,10,10,0.38);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
 
-/* ── Name block ─────────────────────────────────────────────────────────────── */
-.mob-collection {
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  letter-spacing: 0.45em;
-  color: rgba(10,10,10,0.38);
-  text-transform: uppercase;
-  margin-bottom: 5px;
-}
+  .mob-item-name {
+    font-family: var(--font);
+    font-size: clamp(18px, 5.5vw, 26px);
+    letter-spacing: 0.16em;
+    color: rgba(10,10,10,0.88);
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
 
-.mob-item-name {
-  font-family: var(--font);
-  font-size: clamp(18px, 5.5vw, 26px);
-  letter-spacing: 0.16em;
-  color: rgba(10,10,10,0.88);
-  text-transform: uppercase;
-  line-height: 1.1;
-  margin-bottom: 3px;
-}
+  .mob-item-footer {
+    font-family: 'Courier New', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.22em;
+    color: rgba(10,10,10,0.26);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
 
-.mob-item-footer {
-  font-family: 'Courier New', monospace;
-  font-size: 8.5px;
-  letter-spacing: 0.22em;
-  color: rgba(10,10,10,0.26);
-  text-transform: uppercase;
-  margin-bottom: 14px;
-}
+  /* ── Specs block ─────────────────────────────────────────────────────────── */
+  .mob-specs-header {
+    font-family: 'Courier New', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.42em;
+    color: rgba(10,10,10,0.33);
+    text-transform: uppercase;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    border-bottom: 0.5px solid rgba(10,10,10,0.12);
+  }
 
-/* ── Specs block ─────────────────────────────────────────────────────────────── */
-.mob-specs-header {
-  font-family: 'Courier New', monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.42em;
-  color: rgba(10,10,10,0.33);
-  text-transform: uppercase;
-  padding-bottom: 8px;
-  margin-bottom: 11px;
-  border-bottom: 0.5px solid rgba(10,10,10,0.12);
-}
+  .mob-specs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
 
-.mob-specs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin-bottom: 14px;
-}
+  .mob-spec-line {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(10.5px, 2.8vw, 12.5px);
+    letter-spacing: 0.16em;
+    color: rgba(10,10,10,0.58);
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
 
-.mob-spec-line {
-  font-family: 'Courier New', monospace;
-  font-size: clamp(10.5px, 2.8vw, 12.5px);
-  letter-spacing: 0.16em;
-  color: rgba(10,10,10,0.58);
-  text-transform: uppercase;
-  line-height: 1.4;
-}
+  .mob-toc-link { cursor: pointer; transition: opacity 0.15s; }
+  .mob-toc-link:active { opacity: 0.35; }
+  .mob-spec-ph { color: rgba(10,10,10,0.22); letter-spacing: 0.35em; }
 
-.mob-toc-link { cursor: pointer; transition: opacity 0.15s; }
-.mob-toc-link:active { opacity: 0.35; }
-.mob-spec-ph { color: rgba(10,10,10,0.22); letter-spacing: 0.35em; }
+  /* ── Add to cart button ──────────────────────────────────────────────────── */
+  .mob-cart-btn {
+    width: 100%;
+    background: none;
+    border: 0.5px solid rgba(10,10,10,0.30);
+    font-family: var(--font);
+    font-size: 11.5px;
+    letter-spacing: 0.18em;
+    color: rgba(10,10,10,0.68);
+    text-transform: uppercase;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    margin-bottom: 4px;
+    transition: background 0.18s;
+    touch-action: manipulation;
+  }
+  .mob-cart-btn:active { background: rgba(10,10,10,0.05); }
 
-/* ── Add to cart button ──────────────────────────────────────────────────────── */
-.mob-cart-btn {
-  width: 100%;
-  background: none;
-  border: 0.5px solid rgba(10,10,10,0.30);
-  font-family: var(--font);
-  font-size: 11.5px;
-  letter-spacing: 0.18em;
-  color: rgba(10,10,10,0.68);
-  text-transform: uppercase;
-  padding: 0.7rem 1rem;
-  cursor: pointer;
-  margin-bottom: 6px;
-  transition: background 0.18s;
-  touch-action: manipulation;
-}
-.mob-cart-btn:active { background: rgba(10,10,10,0.05); }
+  /* ── Continue cue ────────────────────────────────────────────────────────── */
+  .mob-continue-cue {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 0.75rem 0 0.5rem;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
 
-/* ── Continue cue ────────────────────────────────────────────────────────────── */
-.mob-continue-cue {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 1.25rem 0 0.75rem;
-  cursor: pointer;
-  touch-action: manipulation;
-}
+  .mob-cue-text {
+    font-family: 'Courier New', monospace;
+    font-size: 8px;
+    letter-spacing: 0.42em;
+    color: rgba(10,10,10,0.28);
+    text-transform: uppercase;
+  }
 
-.mob-cue-text {
-  font-family: 'Courier New', monospace;
-  font-size: 8px;
-  letter-spacing: 0.42em;
-  color: rgba(10,10,10,0.28);
-  text-transform: uppercase;
-}
+  .mob-cue-line {
+    width: 1px;
+    height: 20px;
+    background: rgba(10,10,10,0.14);
+    animation: cuePulse 2.2s ease-in-out infinite;
+  }
 
-.mob-cue-line {
-  width: 1px;
-  height: 24px;
-  background: rgba(10,10,10,0.14);
-  animation: cuePulse 2.2s ease-in-out infinite;
-}
+} /* end @media (max-width: 768px) — MOBILE SHOP */
 
 /* ════════════════════════════════════════════════════════════════════════════
    MOBILE  ≤ 768 px
