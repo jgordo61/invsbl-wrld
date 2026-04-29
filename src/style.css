@@ -1383,6 +1383,16 @@ html, body {
     animation: cuePulse 2.2s ease-in-out infinite;
   }
 
+  /* ── Landscape phones: 3D model fills the full viewport ─────────────────── */
+  @media (orientation: landscape) and (max-height: 500px) {
+    #mob-gallery  { display: none !important; }
+    #mob-info     { display: none !important; }
+    #mob-3d-spacer {
+      top: 0;
+      height: 100vh;
+    }
+  }
+
 } /* end mobile shop media query */
 
 /* ════════════════════════════════════════════════════════════════════════════
