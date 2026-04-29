@@ -350,13 +350,35 @@ landingEl.addEventListener('wheel', (e) => {
   if (page === 'landing' && e.deltaY > 0) enterShop()
 }, { passive: false })
 
-// Touch swipe-up on landing / swipe-down on shop
-let _ty0 = 0
-window.addEventListener('touchstart', (e) => { _ty0 = e.touches[0].clientY }, { passive: true })
+// Touch swipe navigation
+let _ty0 = 0, _tx0 = 0
+window.addEventListener('touchstart', (e) => {
+  _ty0 = e.touches[0].clientY
+  _tx0 = e.touches[0].clientX
+}, { passive: true })
+
 window.addEventListener('touchend', (e) => {
-  const dy = _ty0 - e.changedTouches[0].clientY
-  if (page === 'landing' && dy > 40) enterShop()
-  if (page === 'shop' && dy < -40 && shop?.current === 0) exitShop()
+  const dy = _ty0 - e.changedTouches[0].clientY   // positive = swipe up
+  const dx = _tx0 - e.changedTouches[0].clientX   // positive = swipe left
+
+  // Ignore swipes that are more horizontal than vertical
+  if (Math.abs(dy) < Math.abs(dx) * 0.8) return
+
+  if (page === 'landing') {
+    if (dy > 40) enterShop()
+    return
+  }
+
+  if (page === 'shop') {
+    if (dy > 60) {
+      // Swipe up → next item
+      shop?.next()
+    } else if (dy < -60) {
+      // Swipe down → prev item, or exit on first
+      if (shop?.current === 0) exitShop()
+      else shop?.prev()
+    }
+  }
 }, { passive: true })
 
 // Keyboard
