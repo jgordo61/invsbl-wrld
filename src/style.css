@@ -1146,42 +1146,41 @@ html, body {
 
 /* ════════════════════════════════════════════════════════════════════════════
    MOBILE SHOP OVERLAY  (MobileShop.js)
-   Single scrollable container — gallery sticks at top, 3D spacer shows the
-   canvas, white info block slides over the model as user scrolls down.
+   Three fixed zones: gallery (top) · transparent 3D spacer · info drawer (bottom)
+   pointer-events:none on root so the spacer passes touches to the 3D canvas.
    ════════════════════════════════════════════════════════════════════════════ */
 
-/* Scrollable page container — the whole shop is one tall scrollable column. */
+/* Root — pointer-events:none so the 3D spacer zone passes touches
+   straight through to the WebGL canvas. !important beats #shop > * rule. */
 #mob-shop {
   position: fixed;
   inset: 0;
   z-index: 15;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  pointer-events: none !important;
 }
 
 @media (min-width: 769px) {
   #mob-shop { display: none !important; }
 }
 
-/* ── Gallery strip — sticky at top, horizontal scroll ────────────────────── */
+/* ── Gallery strip — fixed at top, horizontal scroll ────────────────────── */
 #mob-gallery {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  position: fixed;
+  top: 0; left: 0; right: 0;
   height: 25vh;
   background: #ffffff;
   border-bottom: 0.5px solid rgba(10,10,10,0.07);
   display: flex;
   flex-direction: row;
-  gap: 12px;
-  padding: 0.75rem 1rem;
+  gap: 10px;
+  padding: 0.75rem 1.25rem;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;           /* vertical touches pass through to page scroll */
+  touch-action: pan-x;
   scroll-snap-type: x mandatory;
+  pointer-events: auto;
+  z-index: 16;
   box-sizing: border-box;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -1238,20 +1237,33 @@ html, body {
   line-height: 1;
 }
 
-/* ── Transparent spacer — 3D canvas shows through this ───────────────────── */
+/* ── Transparent 3D spacer — touches pass through to canvas ─────────────── */
 #mob-3d-spacer {
-  height: 68vh;
+  position: fixed;
+  top: 25vh; left: 0; right: 0;
+  height: 33vh;
   pointer-events: none;
   background: transparent;
+  z-index: 16;
 }
 
-/* ── Info block — white, flows below the 3D zone ─────────────────────────── */
+/* ── Info drawer — fixed at bottom, internally scrollable ───────────────── */
 #mob-info {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 42vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  z-index: 16;
   background: #ffffff;
   border-top: 0.5px solid rgba(10,10,10,0.10);
-  padding: 1.5rem 1.5rem calc(2.5rem + env(safe-area-inset-bottom));
+  padding: 1.25rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom));
   box-sizing: border-box;
-  min-height: 55vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   background-image: repeating-linear-gradient(
     0deg,
     rgba(10,10,10,0.04) 0px,
@@ -1260,6 +1272,10 @@ html, body {
     transparent 3px
   );
 }
+#mob-info::-webkit-scrollbar { display: none; }
+
+/* TOC item: no gallery above, give the drawer more height */
+#mob-info.toc-mode { height: 65vh; }
 
 /* ── Name block ─────────────────────────────────────────────────────────────── */
 .mob-collection {

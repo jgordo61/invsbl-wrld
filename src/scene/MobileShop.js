@@ -114,18 +114,18 @@ export class MobileShop {
     this._el.appendChild(this._infoEl)
     shopEl.appendChild(this._el)
 
-    // ── Scroll: detect when user reaches bottom ───────────────────────────────
-    this._el.addEventListener('scroll', () => {
-      const { scrollTop, scrollHeight, clientHeight } = this._el
-      this._atBottom = scrollHeight - scrollTop - clientHeight < 24
+    // ── Scroll: detect when the info drawer reaches its bottom ───────────────
+    this._infoEl.addEventListener('scroll', () => {
+      const { scrollTop, scrollHeight, clientHeight } = this._infoEl
+      this._atBottom = scrollHeight - scrollTop - clientHeight < 12
     }, { passive: true })
 
-    // ── Touch: overscroll up at bottom → next item ────────────────────────────
-    this._el.addEventListener('touchstart', e => {
+    // ── Touch on info drawer: swipe up at bottom → next item ─────────────────
+    this._infoEl.addEventListener('touchstart', e => {
       this._touchY0 = e.touches[0].clientY
     }, { passive: true })
 
-    this._el.addEventListener('touchend', e => {
+    this._infoEl.addEventListener('touchend', e => {
       const dy = this._touchY0 - e.changedTouches[0].clientY   // +ve = swipe up
       if (this._atBottom && dy > 25) this._onNext?.()
     }, { passive: true })
