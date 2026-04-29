@@ -4,7 +4,11 @@ import { LandingScene }    from './landing/LandingScene.js'
 import { Renderer }        from './scene/Renderer.js'
 import { ShopScene }       from './scene/ShopScene.js'
 import { HUD }             from './scene/HUD.js'
+import { MobileShop }      from './scene/MobileShop.js'
 import './style.css'
+
+// True on phones / narrow tablets — evaluated once at load
+const IS_MOBILE = window.innerWidth <= 768
 
 // ════════════════════════════════════════════════════════════════════════════
 //  CATALOG — add your jewelry pieces here.
@@ -131,6 +135,7 @@ let shop            = null
 let ren             = null    // WebGL renderer, created lazily
 let _renderRafId    = null    // tracks the active render-loop RAF so we can cancel it
 const hud           = new HUD()
+const mobileShop    = new MobileShop()
 
 // TOC item — clicking a spec line fires 'toc-goto'; navigate to that item
 document.addEventListener('toc-goto', e => {
@@ -216,11 +221,15 @@ async function enterShop() {
       shop.addEventListener('exit', () => exitShop())
       shop.addEventListener('change', () => {
         updateHUD()
+        // Both guards internally — only the active one actually runs
         hud.update(shop.currentItem, shop.current)
-        gsap.fromTo([itemColl, itemName, itemPrice],
-          { opacity: 0, y: 12 },
-          { opacity: 1, y: 0, duration: 0.5, stagger: 0.09, ease: 'power2.out' }
-        )
+        mobileShop.update(shop.currentItem, shop.current)
+        if (!IS_MOBILE) {
+          gsap.fromTo([itemColl, itemName, itemPrice],
+            { opacity: 0, y: 12 },
+            { opacity: 1, y: 0, duration: 0.5, stagger: 0.09, ease: 'power2.out' }
+          )
+        }
       })
       _modelsReady = true
       _maybeReveal()
@@ -260,8 +269,17 @@ async function enterShop() {
             { opacity: 0, y: 20 },
             { opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: 'power3.out' }
           )
-          // Boot the HUD panels after the shop has fully slid into view
-          if (shop) hud.show(shop.currentItem, shop.current)
+          // Boot the appropriate HUD for this viewport
+          if (shop) {
+            if (IS_MOBILE) {
+              mobileShop.show(shop.currentItem, shop.current, {
+                onNext: () => shop?.next(),
+                onPrev: () => { if (shop?.current === 0) exitShop(); else shop?.prev() },
+              })
+            } else {
+              hud.show(shop.currentItem, shop.current)
+            }
+          }
           // Signal that the shop is visible — triggers 3D object fade-in
           // (if models are already loaded) or arms the flag for when they do load
           _shopAnimDone = true
@@ -280,7 +298,7 @@ function exitShop() {
   isTransitioning = true
   page = 'landing'
 
-  hud.hide()
+  IS_MOBILE ? mobileShop.hide() : hud.hide()
 
   // Prepare landing above viewport, hidden letters
   landingGL.style.display = 'block'
@@ -369,12 +387,12 @@ window.addEventListener('touchend', (e) => {
     return
   }
 
-  if (page === 'shop') {
+  // Desktop-only within-shop swipe navigation.
+  // On mobile, MobileShop's info-drawer touchend handles item navigation.
+  if (!IS_MOBILE && page === 'shop') {
     if (dy > 60) {
-      // Swipe up → next item
       shop?.next()
     } else if (dy < -60) {
-      // Swipe down → prev item, or exit on first
       if (shop?.current === 0) exitShop()
       else shop?.prev()
     }
