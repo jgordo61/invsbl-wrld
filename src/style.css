@@ -1399,7 +1399,7 @@ html, body {
 
   /* ── Landing title: slightly tighter on narrow screens ───────────────────── */
   .ch--locked {
-    font-size: clamp(3rem, 11vw, 6rem) !important;
+    font-size: clamp(4.5rem, 16.5vw, 9rem) !important;
   }
 
   /* ── Scroll cue: a bit larger for thumb-reading ──────────────────────────── */
