@@ -22,7 +22,7 @@ const CATALOG = [
   {
     name: 'CRESCENT GRADIENT', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Crescent Low Poly.glb',
-    images: [null, null, null],
+    images: [null, null, null, null, null, null, null, null, null, null],
     specs: [
       'MATERIAL — 925 STERLING SILVER',
       'FINISH — GRADIENT OXIDISATION',
@@ -35,7 +35,7 @@ const CATALOG = [
   {
     name: 'HALF CRESCENT GRADIENT', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Crescent Half-Gradient Low Poly.glb',
-    images: [null, null, null],
+    images: [null, null, null, null, null, null, null, null, null, null],
     specs: [
       'MATERIAL — 925 STERLING SILVER',
       'FINISH — HALF GRADIENT OXIDISATION',
@@ -48,7 +48,7 @@ const CATALOG = [
   {
     name: 'CLOUD BENGAL', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Cloud Bengal Low Poly.glb',
-    images: [null, null, null],
+    images: [null, null, null, null, null, null, null, null, null, null],
     specs: [
       'MATERIAL — 925 STERLING SILVER',
       'FINISH — BRUSHED MATTE',
@@ -61,7 +61,7 @@ const CATALOG = [
   {
     name: 'HYPERCUBE', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Hypercube LowPoly.glb',
-    images: [null, null, null],
+    images: [null, null, null, null, null, null, null, null, null, null],
     specs: [
       'MATERIAL — 925 STERLING SILVER',
       'FINISH — HIGH POLISH',
@@ -74,7 +74,7 @@ const CATALOG = [
   {
     name: 'EPSILON', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Epsilon Low Poly.glb',
-    images: [null, null, null],
+    images: [null, null, null, null, null, null, null, null, null, null],
     specs: [
       'MATERIAL — 925 STERLING SILVER',
       'FINISH — SATIN',
@@ -87,7 +87,7 @@ const CATALOG = [
   {
     name: 'ARCHIVE INDEX', collection: 'INVSBL WRLD', price: '',
     modelUrl: null,
-    images: [null, null, null],
+    images: [null, null, null, null, null, null, null, null, null, null],
     toc: true,
     specsHeader: 'ALL WORKS',
     nameFooter: '[ ARCHIVE ]',

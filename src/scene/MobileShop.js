@@ -136,7 +136,7 @@ export class MobileShop {
   _renderGallery(item) {
     this._galEl.innerHTML = ''
     const imgs = [...(item.images ?? [])]
-    while (imgs.length < 3) imgs.push(null)
+    while (imgs.length < 10) imgs.push(null)
 
     imgs.forEach((url, i) => {
       const thumb = document.createElement('div')
