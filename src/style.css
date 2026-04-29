@@ -1238,21 +1238,21 @@ html, body {
     line-height: 1;
   }
 
-  /* ── Transparent 3D spacer — 25vh→75vh, touches reach canvas ───────────── */
+  /* ── Transparent 3D spacer — 25vh→77.5vh, touches reach canvas ─────────── */
   #mob-3d-spacer {
     position: fixed;
     top: 25vh; left: 0; right: 0;
-    height: 50vh;            /* 25 + 50 = 75vh — matches model extent */
+    height: 52.5vh;          /* 25 + 52.5 = 77.5vh */
     pointer-events: none;
     background: transparent;
     z-index: 16;
   }
 
-  /* ── Info drawer — fixed at bottom 25vh, starts at 75vh ────────────────── */
+  /* ── Info drawer — fixed at bottom 22.5vh, starts at 77.5vh ────────────── */
   #mob-info {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 25vh;            /* starts at 75vh — clears the 3D model */
+    height: 22.5vh;          /* starts at 77.5vh */
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
