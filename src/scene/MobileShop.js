@@ -1,22 +1,16 @@
 /**
  * MobileShop
  *
- * Mobile-specific shop layout — replaces the desktop HUD on narrow screens.
+ * Mobile shop layout — a single vertically scrollable column inside a fixed
+ * fullscreen container.  Three sections stacked top-to-bottom:
  *
- * Layout (position: fixed layers, all inside #shop so they auto-hide with it):
+ *   1. #mob-gallery  (28vh, sticky)    — horizontal-scroll photo strip,
+ *                                        same .hud-gpanel panels as desktop
+ *   2. #mob-3d-spacer (68vh, transparent) — 3D canvas shows through
+ *   3. #mob-info  (auto, white)        — item name, specs, cart, continue cue
  *
- *   ┌─────────────────────────────────┐  ← top: 0
- *   │  #mob-gallery  (22vh)           │  horizontal-scroll photo strip
- *   ├─────────────────────────────────┤  ← 22vh
- *   │  transparent (36vh)             │  pointer-events:none → 3D canvas below
- *   ├─────────────────────────────────┤  ← 58vh
- *   │  #mob-info     (42vh)           │  vertically-scrollable text drawer
- *   └─────────────────────────────────┘  ← 100vh
- *
- * Navigation:
- *   • Scroll through the text drawer to the bottom, then swipe up → next item
- *   • Tap the CONTINUE cue at the bottom → next item
- *   • The dots-nav on the right lets you jump directly to any item
+ * Total content height ≈ 160vh, so the page scrolls.
+ * When scrolled to the very bottom, swiping up or tapping CONTINUE fires onNext.
  */
 export class MobileShop {
   constructor() {
@@ -26,23 +20,19 @@ export class MobileShop {
     this._onNext   = null
     this._onPrev   = null
 
-    this._el      = null   // root wrapper (pointer-events:none)
-    this._galEl   = null   // gallery strip
-    this._infoEl  = null   // info drawer
-    this._nameEl  = null
-    this._specsEl = null
-    this._cueEl   = null
+    this._el       = null   // #mob-shop  — scroll container
+    this._galEl    = null   // #mob-gallery
+    this._spacerEl = null   // #mob-3d-spacer
+    this._infoEl   = null   // #mob-info
+    this._nameEl   = null
+    this._specsEl  = null
+    this._cueEl    = null
 
     this._buildDOM()
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
 
-  /**
-   * @param {object}   item
-   * @param {number}   idx
-   * @param {object}   [cbs]  { onNext, onPrev }
-   */
   show(item, idx, cbs = {}) {
     this._onNext = cbs.onNext ?? null
     this._onPrev = cbs.onPrev ?? null
@@ -51,7 +41,6 @@ export class MobileShop {
     this._update(item, idx)
   }
 
-  /** Called every time the active catalog item changes. */
   update(item, idx) {
     if (!this._visible) return
     this._update(item, idx)
@@ -71,31 +60,33 @@ export class MobileShop {
 
   _update(item, idx) {
     this._atBottom = false
-    this._infoEl.scrollTo({ top: 0, behavior: 'instant' })
+    this._el.scrollTo({ top: 0, behavior: 'instant' })
 
     this._renderGallery(item)
     this._renderInfo(item)
 
-    // TOC item: no gallery, taller info drawer
-    this._galEl.style.display = item.toc ? 'none' : 'flex'
-    this._infoEl.classList.toggle('toc-mode', !!item.toc)
-
-    // Hide continue cue on last item (no next)
-    this._cueEl.style.display = item.toc ? 'none' : 'flex'
+    // TOC item has no 3D model and no gallery
+    this._galEl.style.display    = item.toc ? 'none' : 'flex'
+    this._spacerEl.style.display = item.toc ? 'none' : 'block'
+    this._cueEl.style.display    = 'flex'   // always show — last item just does nothing
   }
 
   _buildDOM() {
     const shopEl = document.getElementById('shop') ?? document.body
 
-    // ── Root — pointer-events:none so middle zone passes touches to 3D canvas ──
+    // ── Scroll container ──────────────────────────────────────────────────────
     this._el = document.createElement('div')
     this._el.id = 'mob-shop'
 
-    // ── Gallery strip ─────────────────────────────────────────────────────────
+    // ── Gallery strip (sticky at top) ─────────────────────────────────────────
     this._galEl = document.createElement('div')
     this._galEl.id = 'mob-gallery'
 
-    // ── Info drawer ───────────────────────────────────────────────────────────
+    // ── Transparent 3D spacer ─────────────────────────────────────────────────
+    this._spacerEl = document.createElement('div')
+    this._spacerEl.id = 'mob-3d-spacer'
+
+    // ── Info block (white, flows below the model) ─────────────────────────────
     this._infoEl = document.createElement('div')
     this._infoEl.id = 'mob-info'
 
@@ -105,7 +96,7 @@ export class MobileShop {
     this._specsEl = document.createElement('div')
     this._specsEl.className = 'mob-specs-block'
 
-    // CONTINUE cue — always at the bottom of the scrollable content
+    // CONTINUE cue — tapping advances to next item
     this._cueEl = document.createElement('div')
     this._cueEl.className = 'mob-continue-cue'
     this._cueEl.innerHTML = `
@@ -119,32 +110,31 @@ export class MobileShop {
     this._infoEl.appendChild(this._cueEl)
 
     this._el.appendChild(this._galEl)
+    this._el.appendChild(this._spacerEl)
     this._el.appendChild(this._infoEl)
     shopEl.appendChild(this._el)
 
-    // ── Scroll detection ──────────────────────────────────────────────────────
-    this._infoEl.addEventListener('scroll', () => {
-      const { scrollTop, scrollHeight, clientHeight } = this._infoEl
-      this._atBottom = scrollHeight - scrollTop - clientHeight < 12
+    // ── Scroll: detect when user reaches bottom ───────────────────────────────
+    this._el.addEventListener('scroll', () => {
+      const { scrollTop, scrollHeight, clientHeight } = this._el
+      this._atBottom = scrollHeight - scrollTop - clientHeight < 24
     }, { passive: true })
 
-    // ── Touch gestures on info drawer ─────────────────────────────────────────
-    // Swipe up when at bottom → next item
-    // Swipe down when at top  → prev item / exit
-    this._infoEl.addEventListener('touchstart', e => {
+    // ── Touch: overscroll up at bottom → next item ────────────────────────────
+    this._el.addEventListener('touchstart', e => {
       this._touchY0 = e.touches[0].clientY
     }, { passive: true })
 
-    this._infoEl.addEventListener('touchend', e => {
-      const dy     = this._touchY0 - e.changedTouches[0].clientY   // +ve = swipe up
-      const atTop  = this._infoEl.scrollTop < 8
-
-      if (this._atBottom && dy > 25)  this._onNext?.()
-      if (atTop && dy < -35)          this._onPrev?.()
+    this._el.addEventListener('touchend', e => {
+      const dy = this._touchY0 - e.changedTouches[0].clientY   // +ve = swipe up
+      if (this._atBottom && dy > 25) this._onNext?.()
     }, { passive: true })
   }
 
   // ── Gallery rendering ───────────────────────────────────────────────────────
+  // Uses the same .hud-gpanel DOM structure as the desktop HUD gallery so all
+  // existing CSS (clip-path, drop-shadow, scanlines, corner brackets, label,
+  // boot animation) applies without any duplication.
 
   _renderGallery(item) {
     this._galEl.innerHTML = ''
@@ -152,26 +142,37 @@ export class MobileShop {
     while (imgs.length < 3) imgs.push(null)
 
     imgs.forEach((url, i) => {
-      const thumb = document.createElement('div')
-      thumb.className = 'mob-thumb'
+      const panel = document.createElement('div')
+      panel.className = 'hud-gpanel'
+      panel.innerHTML = `
+        <div class="gpanel-inner">
+          ${url
+            ? `<img src="${url}" alt="" class="gpanel-img" />`
+            : `<div class="hud-nosignal">NO SIGNAL</div>`
+          }
+          <div class="hud-corner hud-corner--tl"></div>
+          <div class="hud-corner hud-corner--tr"></div>
+          <div class="hud-corner hud-corner--bl"></div>
+          <div class="hud-corner hud-corner--br"></div>
+          <div class="hud-label">
+            [ VIEW·${String(i + 1).padStart(2, '0')} ]
+            <span class="hud-cursor">_</span>
+          </div>
+        </div>
+      `
 
-      if (url) {
-        const img = document.createElement('img')
-        img.src = url; img.alt = ''; img.className = 'mob-thumb-img'
-        thumb.appendChild(img)
-      } else {
-        const ns = document.createElement('div')
-        ns.className = 'mob-thumb-nosig'
-        ns.textContent = 'NO·SIGNAL'
-        thumb.appendChild(ns)
+      // Boot-glitch animation — same stagger as desktop gallery
+      const inner = panel.querySelector('.gpanel-inner')
+      if (inner) {
+        inner.style.animationDelay = (i * 0.12) + 's'
+        inner.classList.add('panel-booting')
+        inner.addEventListener('animationend', () => {
+          inner.classList.remove('panel-booting')
+          inner.style.animationDelay = ''
+        }, { once: true })
       }
 
-      const label = document.createElement('div')
-      label.className = 'mob-thumb-label'
-      label.textContent = `[ VIEW·${String(i + 1).padStart(2, '0')} ]`
-      thumb.appendChild(label)
-
-      this._galEl.appendChild(thumb)
+      this._galEl.appendChild(panel)
     })
   }
 
@@ -182,14 +183,12 @@ export class MobileShop {
     const header = item.specsHeader ?? 'SPECIFICATIONS'
     const footer = item.nameFooter  ?? '[ DESIGNATION ]'
 
-    // Name block
     this._nameEl.innerHTML = `
       <div class="mob-collection">${item.collection ?? 'INVSBL'}</div>
       <div class="mob-item-name">${item.name}</div>
       <div class="mob-item-footer">${footer}<span class="hud-cursor">_</span></div>
     `
 
-    // Specs block
     const specsHTML = specs.length
       ? specs.map((s, i) => item.toc
           ? `<div class="mob-spec-line mob-toc-link" data-goto="${i}">${s}</div>`
@@ -205,7 +204,7 @@ export class MobileShop {
       ${cartHTML}
     `
 
-    // Wire cart
+    // Wire cart button
     this._specsEl.querySelector('.mob-cart-btn')
       ?.addEventListener('click', () => document.getElementById('addToCart')?.click())
 
