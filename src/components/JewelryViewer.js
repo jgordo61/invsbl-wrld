@@ -26,7 +26,9 @@ export class JewelryViewer extends THREE.EventDispatcher {
 
     this._dragging  = false
     this._lastX     = 0
+    this._lastY     = 0
     this._velX      = 0
+    this._velY      = 0
     this._dom       = null
     this._particles = null   // ParticleSystem, built after mesh loads
 
@@ -198,20 +200,30 @@ export class JewelryViewer extends THREE.EventDispatcher {
   _onPointerDown(e) {
     this._dragging = true
     this._lastX    = e.clientX
+    this._lastY    = e.clientY
     this._velX     = 0
+    this._velY     = 0
     try { e.target.setPointerCapture(e.pointerId) } catch (_) {}
   }
 
   _onPointerMove(e) {
     if (!this._dragging) return
     const dx    = e.clientX - this._lastX
+    const dy    = e.clientY - this._lastY
     this._lastX = e.clientX
+    this._lastY = e.clientY
     this._velX  = dx
-    const qY    = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
+    this._velY  = dy
+    const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
+    const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), dy * 0.01)
     this.group.quaternion.premultiply(qY)
+    this.group.quaternion.premultiply(qX)
   }
 
-  _onPointerUp() { this._dragging = false }
+  _onPointerUp() {
+    this._dragging = false
+    this._velY     = 0   // vertical has no auto-spin; just stop cleanly
+  }
 
   // ── Per-frame — accepts mouse world-space position from ShopScene ─────────
   update(mouseWorld) {

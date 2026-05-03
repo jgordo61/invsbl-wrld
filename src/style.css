@@ -208,6 +208,7 @@ html, body {
   inset: 0;
   pointer-events: auto;
   cursor: grab;
+  touch-action: none;   /* let pointer events fire on touch — enables drag-to-rotate */
 }
 
 .shop-canvas-container:active { cursor: grabbing; }
