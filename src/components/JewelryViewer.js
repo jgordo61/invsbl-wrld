@@ -214,10 +214,10 @@ export class JewelryViewer extends THREE.EventDispatcher {
     this._lastY = e.clientY
 
     if (this._isDesktop()) {
-      // Desktop: X axis only — vertical drag tilts the model
-      this._velX = dy
+      // Desktop: Y axis only — horizontal drag spins the model
+      this._velX = dx
       this.group.quaternion.premultiply(
-        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), dy * 0.01)
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
       )
     } else {
       // Mobile: full 2-axis drag
@@ -249,10 +249,8 @@ export class JewelryViewer extends THREE.EventDispatcher {
     if (!this._dragging) {
       const BASE = 0.4
       this._velX += (BASE - this._velX) * 0.03
-      // Desktop: spin around X axis — mobile: spin around Y axis
-      const axis = this._isDesktop()
-        ? new THREE.Vector3(1, 0, 0)
-        : new THREE.Vector3(0, 1, 0)
+      // Desktop: spin around Y axis — mobile: spin around Y axis
+      const axis = new THREE.Vector3(0, 1, 0)
       this.group.quaternion.premultiply(
         new THREE.Quaternion().setFromAxisAngle(axis, this._velX * 0.01)
       )
