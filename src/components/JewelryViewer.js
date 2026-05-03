@@ -212,17 +212,33 @@ export class JewelryViewer extends THREE.EventDispatcher {
     const dy    = e.clientY - this._lastY
     this._lastX = e.clientX
     this._lastY = e.clientY
-    this._velX  = dx
-    this._velY  = dy
-    const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
-    const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), dy * 0.01)
-    this.group.quaternion.premultiply(qY)
-    this.group.quaternion.premultiply(qX)
+
+    if (this._isDesktop()) {
+      // Desktop: X axis only — vertical drag tilts the model
+      this._velX = dy
+      this.group.quaternion.premultiply(
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), dy * 0.01)
+      )
+    } else {
+      // Mobile: full 2-axis drag
+      this._velX = dx
+      this._velY = dy
+      this.group.quaternion.premultiply(
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
+      )
+      this.group.quaternion.premultiply(
+        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), dy * 0.01)
+      )
+    }
   }
 
   _onPointerUp() {
     this._dragging = false
-    this._velY     = 0   // vertical has no auto-spin; just stop cleanly
+    this._velY     = 0
+  }
+
+  _isDesktop() {
+    return Math.min(window.innerWidth, window.innerHeight) > 768
   }
 
   // ── Per-frame — accepts mouse world-space position from ShopScene ─────────
@@ -233,8 +249,13 @@ export class JewelryViewer extends THREE.EventDispatcher {
     if (!this._dragging) {
       const BASE = 0.4
       this._velX += (BASE - this._velX) * 0.03
-      const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this._velX * 0.01)
-      this.group.quaternion.premultiply(qY)
+      // Desktop: spin around X axis — mobile: spin around Y axis
+      const axis = this._isDesktop()
+        ? new THREE.Vector3(1, 0, 0)
+        : new THREE.Vector3(0, 1, 0)
+      this.group.quaternion.premultiply(
+        new THREE.Quaternion().setFromAxisAngle(axis, this._velX * 0.01)
+      )
     }
 
     // Particle physics — convert world-space mouse to pivot-local space
