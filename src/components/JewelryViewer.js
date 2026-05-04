@@ -213,23 +213,11 @@ export class JewelryViewer extends THREE.EventDispatcher {
     this._lastX = e.clientX
     this._lastY = e.clientY
 
-    if (this._isDesktop()) {
-      // Desktop: Y axis only — horizontal drag spins the model
-      this._velX = dx
-      this.group.quaternion.premultiply(
-        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
-      )
-    } else {
-      // Mobile: full 2-axis drag
-      this._velX = dx
-      this._velY = dy
-      this.group.quaternion.premultiply(
-        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
-      )
-      this.group.quaternion.premultiply(
-        new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), dy * 0.01)
-      )
-    }
+    // Y axis only — horizontal drag spins the model (desktop and mobile)
+    this._velX = dx
+    this.group.quaternion.premultiply(
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01)
+    )
   }
 
   _onPointerUp() {
