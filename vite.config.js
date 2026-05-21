@@ -11,6 +11,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    chunkSizeWarningLimit: 600,   // Three.js is ~526 kB minified — expected
     rollupOptions: {
       output: {
         manualChunks: {
