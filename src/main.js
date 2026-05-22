@@ -7,9 +7,12 @@ import { HUD }             from './scene/HUD.js'
 import { MobileShop }      from './scene/MobileShop.js'
 import './style.css'
 
-// True on phones regardless of orientation — uses the shorter dimension so
-// a phone rotated to landscape (e.g. 844×390) still gets the mobile layout.
-const IS_MOBILE = Math.min(window.innerWidth, window.innerHeight) <= 768
+// True only when the device is a phone in portrait orientation.
+// Landscape phones get the full desktop HUD layout.
+function isMobile() {
+  return window.innerWidth <= window.innerHeight   // portrait
+      && window.innerWidth <= 768
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 //  CATALOG — add your jewelry pieces here.
@@ -225,7 +228,7 @@ async function enterShop() {
         // Both guards internally — only the active one actually runs
         hud.update(shop.currentItem, shop.current)
         mobileShop.update(shop.currentItem, shop.current)
-        if (!IS_MOBILE) {
+        if (!isMobile()) {
           gsap.fromTo([itemColl, itemName, itemPrice],
             { opacity: 0, y: 12 },
             { opacity: 1, y: 0, duration: 0.5, stagger: 0.09, ease: 'power2.out' }
@@ -272,7 +275,7 @@ async function enterShop() {
           )
           // Boot the appropriate HUD for this viewport
           if (shop) {
-            if (IS_MOBILE) {
+            if (isMobile()) {
               mobileShop.show(shop.currentItem, shop.current, {
                 onNext: () => shop?.next(),
                 onPrev: () => { if (shop?.current === 0) exitShop(); else shop?.prev() },
@@ -299,7 +302,7 @@ function exitShop() {
   isTransitioning = true
   page = 'landing'
 
-  IS_MOBILE ? mobileShop.hide() : hud.hide()
+  isMobile() ? mobileShop.hide() : hud.hide()
 
   // Prepare landing above viewport, hidden letters
   landingGL.style.display = 'block'
@@ -390,7 +393,7 @@ window.addEventListener('touchend', (e) => {
 
   // Desktop-only within-shop swipe navigation.
   // On mobile, MobileShop's info-drawer touchend handles item navigation.
-  if (!IS_MOBILE && page === 'shop') {
+  if (!isMobile() && page === 'shop') {
     if (dy > 60) {
       shop?.next()
     } else if (dy < -60) {
@@ -415,6 +418,21 @@ window.addEventListener('keydown', (e) => {
 })
 
 navBack.addEventListener('click', exitShop)
+
+// ── Orientation change — swap between mobile and desktop layouts ──────────────
+window.addEventListener('resize', () => {
+  if (page !== 'shop' || !shop) return
+  if (isMobile()) {
+    hud.hide()
+    mobileShop.show(shop.currentItem, shop.current, {
+      onNext: () => shop?.next(),
+      onPrev: () => { if (shop?.current === 0) exitShop(); else shop?.prev() },
+    })
+  } else {
+    mobileShop.hide()
+    hud.show(shop.currentItem, shop.current)
+  }
+})
 
 // ════════════════════════════════════════════════════════════════════════════
 //  CART
