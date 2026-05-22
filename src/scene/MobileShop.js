@@ -60,6 +60,7 @@ export class MobileShop {
   _update(item, idx) {
     this._atBottom = false
     this._el.scrollTo({ top: 0, behavior: 'instant' })
+    this._infoEl.scrollTo({ top: 0, behavior: 'instant' })
 
     this._renderGallery(item)
     this._renderInfo(item)
