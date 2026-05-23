@@ -420,7 +420,7 @@ window.addEventListener('keydown', (e) => {
 navBack.addEventListener('click', exitShop)
 
 // ── Orientation change — swap between mobile and desktop layouts ──────────────
-window.addEventListener('resize', () => {
+function _onOrientationChange() {
   if (page !== 'shop' || !shop) return
   if (isMobile()) {
     hud.hide()
@@ -432,6 +432,11 @@ window.addEventListener('resize', () => {
     mobileShop.hide()
     hud.show(shop.currentItem, shop.current)
   }
+}
+window.addEventListener('resize', _onOrientationChange)
+window.addEventListener('orientationchange', () => {
+  // Brief delay so innerWidth/innerHeight reflect the new orientation
+  setTimeout(_onOrientationChange, 100)
 })
 
 // ════════════════════════════════════════════════════════════════════════════
