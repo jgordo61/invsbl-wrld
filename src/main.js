@@ -435,8 +435,8 @@ function _onOrientationChange() {
 }
 window.addEventListener('resize', _onOrientationChange)
 window.addEventListener('orientationchange', () => {
-  // Brief delay so innerWidth/innerHeight reflect the new orientation
-  setTimeout(_onOrientationChange, 100)
+  // Delay so innerWidth/innerHeight reflect the new orientation on iOS
+  setTimeout(_onOrientationChange, 150)
 })
 
 // ════════════════════════════════════════════════════════════════════════════

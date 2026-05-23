@@ -1428,3 +1428,28 @@ html, body {
     height: 60vh;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LANDSCAPE MOBILE  — phones rotated sideways get the desktop HUD layout
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+
+  /* ── Landing: shrink title so it doesn't fight the scroll cue ────────────── */
+  .ch--locked {
+    font-size: clamp(2rem, 8vh, 4rem) !important;
+  }
+
+  /* ── Scroll cue: tuck closer to bottom edge ──────────────────────────────── */
+  .scroll-cue {
+    bottom: 0.75rem;
+    font-size: 0.55rem;
+  }
+  .cue-line { height: 1.2rem; }
+
+  /* ── Shop: desktop HUD elements must be visible ──────────────────────────── */
+  .gallery-wrap { display: block; }
+  .info-panels  { display: flex; }
+
+  /* ── Mobile shop overlay must be hidden ─────────────────────────────────── */
+  #mob-shop { display: none !important; }
+}
