@@ -182,18 +182,20 @@ export class JewelryViewer extends THREE.EventDispatcher {
   // ── Interaction ───────────────────────────────────────────────────────────
   enableInteraction(dom) {
     this._dom = dom
-    dom.addEventListener('pointerdown', this._onPointerDown)
-    dom.addEventListener('pointermove', this._onPointerMove)
-    dom.addEventListener('pointerup',   this._onPointerUp)
-    dom.addEventListener('pointerleave',this._onPointerUp)
+    dom.addEventListener('pointerdown',   this._onPointerDown)
+    dom.addEventListener('pointermove',   this._onPointerMove)
+    dom.addEventListener('pointerup',     this._onPointerUp)
+    dom.addEventListener('pointercancel', this._onPointerUp)  // iOS/Android interrupt
+    // pointerleave intentionally omitted — it fires spuriously on mobile when
+    // the finger crosses child elements, falsely ending the drag
   }
 
   disableInteraction() {
     if (!this._dom) return
-    this._dom.removeEventListener('pointerdown', this._onPointerDown)
-    this._dom.removeEventListener('pointermove', this._onPointerMove)
-    this._dom.removeEventListener('pointerup',   this._onPointerUp)
-    this._dom.removeEventListener('pointerleave',this._onPointerUp)
+    this._dom.removeEventListener('pointerdown',   this._onPointerDown)
+    this._dom.removeEventListener('pointermove',   this._onPointerMove)
+    this._dom.removeEventListener('pointerup',     this._onPointerUp)
+    this._dom.removeEventListener('pointercancel', this._onPointerUp)
     this._dom = null
   }
 
@@ -203,7 +205,9 @@ export class JewelryViewer extends THREE.EventDispatcher {
     this._lastY    = e.clientY
     this._velX     = 0
     this._velY     = 0
-    try { e.target.setPointerCapture(e.pointerId) } catch (_) {}
+    // Capture to the container (not e.target) so pointermove keeps firing
+    // even when the finger slides off a child element
+    try { this._dom.setPointerCapture(e.pointerId) } catch (_) {}
   }
 
   _onPointerMove(e) {
@@ -220,9 +224,12 @@ export class JewelryViewer extends THREE.EventDispatcher {
     )
   }
 
-  _onPointerUp() {
+  _onPointerUp(e) {
     this._dragging = false
     this._velY     = 0
+    // Pointer capture releases automatically on pointerup/cancel,
+    // but explicit release prevents edge cases on some mobile browsers
+    try { this._dom?.releasePointerCapture(e.pointerId) } catch (_) {}
   }
 
   _isDesktop() {
