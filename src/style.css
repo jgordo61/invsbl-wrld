@@ -717,6 +717,7 @@ html, body {
   height: 185px;
   cursor: grab;              /* cursor lives here — gallery-wrap is pointer-events:none */
   pointer-events: auto;      /* panels explicitly capture events so bubbling still works */
+  touch-action: none;        /* allow pointer-event drag-scroll on touch devices */
   font-family: 'Courier New', Courier, monospace;
   will-change: transform, opacity, left, top;
 }
@@ -1451,15 +1452,11 @@ html, body {
   .gallery-wrap { display: block; }
   .info-panels  { display: flex; }
 
-  /* ── Info panels: 67% of desktop size (−33%) ────────────────────────────── */
-  .info-panel {
-    width: 154px;   /* 308px × 0.5 */
-    font-size: 0.5em;
+  /* ── Info panels: uniform 42% scale — all axes shrink together ──────────── */
+  .info-panels {
+    transform: translateY(-50%) scale(0.42);
+    transform-origin: right center;
   }
-  .info-name-panel  { height: auto; min-height: 0; }
-  .info-panels-inner { gap: 6px; }
-  .ipanel-inner { padding: 8px 10px; }
-  .info-cart-panel { width: auto; margin-right: 0; }
 
   /* ── Mobile shop overlay must be hidden ─────────────────────────────────── */
   #mob-shop { display: none !important; }
