@@ -204,6 +204,7 @@ async function enterShop() {
 
     if (!ren) {
       ren = new Renderer(webglEl)
+      _updateCameraZoom()   // apply landscape zoom on first load if already horizontal
     }
 
     // Only start a new render loop if one isn't already running
