@@ -1460,6 +1460,12 @@ html, body {
     transform-origin: right center;
   }
 
+  /* ── Archive / TOC: centred panel also needs landscape scaling ───────────── */
+  .info-panels.toc-mode {
+    transform: translate(-50%, -50%) scale(0.50);
+    transform-origin: center center;
+  }
+
   /* ── Mobile shop overlay must be hidden ─────────────────────────────────── */
   #mob-shop { display: none !important; }
 }
