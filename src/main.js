@@ -430,7 +430,7 @@ function _isLandscapePhone() {
 }
 
 const CAMERA_Z_DEFAULT  = 4.5
-const CAMERA_Z_LANDSCAPE = CAMERA_Z_DEFAULT / 1.2   // 20% closer = 20% larger model
+const CAMERA_Z_LANDSCAPE = CAMERA_Z_DEFAULT / (1.2 * 1.33)   // +20% then +33% larger
 
 function _updateCameraZoom() {
   if (!ren) return
