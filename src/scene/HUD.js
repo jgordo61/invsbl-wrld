@@ -360,6 +360,14 @@ export class HUD {
     const n = this._panels.length
     if (!n) return
 
+    // Scale gallery panels down in landscape-mobile so they don't occlude the model
+    const isLandscapeMobile = window.innerHeight < 500
+                           && window.innerWidth  > window.innerHeight
+                           && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+    const scale   = isLandscapeMobile ? Math.min(window.innerHeight / 500, 0.6) : 1
+    const panelW  = Math.round(PANEL_W * scale)
+    const panelH  = Math.round(PANEL_H * scale)
+
     this._panels.forEach(({ el }, i) => {
       const t = T_START + (i - this._scrollOff) * T_STEP
 
@@ -375,8 +383,10 @@ export class HUD {
 
       el.style.opacity        = alpha
       el.style.pointerEvents  = offscreen ? 'none' : ''
-      el.style.left           = (x - PANEL_W / 2) + 'px'
-      el.style.top            = (y - PANEL_H / 2) + 'px'
+      el.style.width          = panelW + 'px'
+      el.style.height         = panelH + 'px'
+      el.style.left           = (x - panelW / 2) + 'px'
+      el.style.top            = (y - panelH / 2) + 'px'
       el.style.transform      = ''
       el.style.zIndex         = Math.round(alpha * 5)
     })
