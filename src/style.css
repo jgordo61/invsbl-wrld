@@ -1451,23 +1451,14 @@ html, body {
   #hud-overlay  { display: block !important; }
   .gallery-wrap { display: block; }
 
-  /* ── Info panels: 42% of desktop — box AND fonts scale together ──────────── */
+  /* ── Info panels: uniform scale — transform handles ALL dimensions including
+     fonts and padding, so no separate overrides needed. The original 76px
+     padding-left is preserved so text clears the diagonal clip-path.        ── */
   .info-panels {
     display: flex;
-    transform: translateY(-50%) scale(0.42);
+    transform: translateY(-50%) scale(0.50);
     transform-origin: right center;
   }
-
-  /* Explicit font overrides so px values match the scaled box exactly */
-  .ipanel-collection   { font-size: 5px; }    /* 12px × 0.42 */
-  .ipanel-name         { font-size: 9px; }    /* 22px × 0.42 */
-  .ipanel-specs-header { font-size: 5px; }    /* 12px × 0.42 */
-  .spec-line           { font-size: 5.5px; }  /* 13.5px × 0.42 */
-  .ipanel-footer       { font-size: 5px; }    /* 12.5px × 0.42 */
-  .ipanel-cart-btn     { font-size: 5px; }    /* 12.35px × 0.42 */
-  .ipanel-inner        { padding: 8px 32px 10px 32px; } /* 42% of 18/76/24/76 */
-  .info-name-panel     { height: auto; }
-  .info-panels-inner   { gap: 10px; }         /* 24px × 0.42 */
 
   /* ── Mobile shop overlay must be hidden ─────────────────────────────────── */
   #mob-shop { display: none !important; }

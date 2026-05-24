@@ -366,7 +366,7 @@ export class HUD {
   // Arc y-span ≈ 0.84 × vh; need step × 0.84vh > panelH + 20px gap.
   _tStep() {
     if (!this._isLandscapeMobile()) return T_STEP
-    const panelH = Math.round(PANEL_H * 0.42)
+    const panelH = Math.round(PANEL_H * 0.38)
     return Math.max(T_STEP, (panelH + 20) / (0.84 * window.innerHeight))
   }
 
@@ -377,7 +377,7 @@ export class HUD {
     if (!n) return
 
     const lm     = this._isLandscapeMobile()
-    const scale  = lm ? 0.42 : 1
+    const scale  = lm ? 0.38 : 1
     const panelW = Math.round(PANEL_W * scale)
     const panelH = Math.round(PANEL_H * scale)
     const tStep  = this._tStep()

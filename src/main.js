@@ -423,7 +423,22 @@ window.addEventListener('keydown', (e) => {
 navBack.addEventListener('click', exitShop)
 
 // ── Orientation change — swap between mobile and desktop layouts ──────────────
+function _isLandscapePhone() {
+  return window.innerHeight < 500
+      && window.innerWidth  > window.innerHeight
+      && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+}
+
+const CAMERA_Z_DEFAULT  = 4.5
+const CAMERA_Z_LANDSCAPE = CAMERA_Z_DEFAULT / 1.2   // 20% closer = 20% larger model
+
+function _updateCameraZoom() {
+  if (!ren) return
+  ren.camera.position.z = _isLandscapePhone() ? CAMERA_Z_LANDSCAPE : CAMERA_Z_DEFAULT
+}
+
 function _onOrientationChange() {
+  _updateCameraZoom()
   if (page !== 'shop' || !shop) return
   if (isMobile()) {
     hud.hide()
