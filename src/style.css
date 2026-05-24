@@ -1453,8 +1453,8 @@ html, body {
 
   /* ── Info panels: 67% of desktop size (−33%) ────────────────────────────── */
   .info-panel {
-    width: 308px;   /* 459px × 0.67 */
-    font-size: 0.67em;
+    width: 154px;   /* 308px × 0.5 */
+    font-size: 0.5em;
   }
   .info-name-panel  { height: auto; min-height: 0; }
   .info-panels-inner { gap: 6px; }
