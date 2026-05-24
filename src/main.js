@@ -373,10 +373,12 @@ landingEl.addEventListener('wheel', (e) => {
 }, { passive: false })
 
 // Touch swipe navigation
-let _ty0 = 0, _tx0 = 0
+let _ty0 = 0, _tx0 = 0, _touchOnGallery = false
 window.addEventListener('touchstart', (e) => {
   _ty0 = e.touches[0].clientY
   _tx0 = e.touches[0].clientX
+  // Track if touch starts on a gallery panel so we don't also trigger item nav
+  _touchOnGallery = !!e.target.closest?.('.hud-gpanel')
 }, { passive: true })
 
 window.addEventListener('touchend', (e) => {
@@ -393,7 +395,8 @@ window.addEventListener('touchend', (e) => {
 
   // Desktop-only within-shop swipe navigation.
   // On mobile, MobileShop's info-drawer touchend handles item navigation.
-  if (!isMobile() && page === 'shop') {
+  // Skip if the touch started on a gallery panel — that gesture belongs to the gallery.
+  if (!isMobile() && page === 'shop' && !_touchOnGallery) {
     if (dy > 60) {
       shop?.next()
     } else if (dy < -60) {

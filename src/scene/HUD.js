@@ -354,22 +354,36 @@ export class HUD {
     }
   }
 
+  // ── Landscape-mobile helpers ─────────────────────────────────────────────────
+
+  _isLandscapeMobile() {
+    return window.innerHeight < 500
+        && window.innerWidth  > window.innerHeight
+        && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  }
+
+  // Dynamic T_STEP: wider spacing in landscape so scaled panels don't overlap.
+  // Arc y-span ≈ 0.84 × vh; need step × 0.84vh > panelH + 20px gap.
+  _tStep() {
+    if (!this._isLandscapeMobile()) return T_STEP
+    const panelH = Math.round(PANEL_H * 0.42)
+    return Math.max(T_STEP, (panelH + 20) / (0.84 * window.innerHeight))
+  }
+
   // ── Layout ──────────────────────────────────────────────────────────────────
 
   _layout() {
     const n = this._panels.length
     if (!n) return
 
-    // Scale gallery panels down in landscape-mobile so they don't occlude the model
-    const isLandscapeMobile = window.innerHeight < 500
-                           && window.innerWidth  > window.innerHeight
-                           && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
-    const scale   = isLandscapeMobile ? 0.42 : 1
-    const panelW  = Math.round(PANEL_W * scale)
-    const panelH  = Math.round(PANEL_H * scale)
+    const lm     = this._isLandscapeMobile()
+    const scale  = lm ? 0.42 : 1
+    const panelW = Math.round(PANEL_W * scale)
+    const panelH = Math.round(PANEL_H * scale)
+    const tStep  = this._tStep()
 
     this._panels.forEach(({ el }, i) => {
-      const t = T_START + (i - this._scrollOff) * T_STEP
+      const t = T_START + (i - this._scrollOff) * tStep
 
       const offscreen = t < -0.06 || t > 1.06
 
@@ -411,7 +425,8 @@ export class HUD {
   // ── Input ────────────────────────────────────────────────────────────────────
 
   _maxOff() {
-    const visible = (1 - T_START * 2 - FADE * 2) / T_STEP
+    const tStep   = this._tStep()
+    const visible = (1 - T_START * 2 - FADE * 2) / tStep
     return Math.max(0, this._panels.length - Math.floor(visible) - 1)
   }
 
