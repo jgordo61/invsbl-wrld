@@ -364,7 +364,7 @@ export class HUD {
     const isLandscapeMobile = window.innerHeight < 500
                            && window.innerWidth  > window.innerHeight
                            && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
-    const scale   = isLandscapeMobile ? Math.min(window.innerHeight / 500, 0.6) : 1
+    const scale   = isLandscapeMobile ? 0.67 : 1
     const panelW  = Math.round(PANEL_W * scale)
     const panelH  = Math.round(PANEL_H * scale)
 

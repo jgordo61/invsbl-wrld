@@ -1451,16 +1451,14 @@ html, body {
   .gallery-wrap { display: block; }
   .info-panels  { display: flex; }
 
-  /* ── Info panels: scale down so they don't occlude the model ─────────────── */
+  /* ── Info panels: 67% of desktop size (−33%) ────────────────────────────── */
   .info-panel {
-    width: clamp(180px, 30vw, 280px);
-    font-size: 0.7em;
+    width: 308px;   /* 459px × 0.67 */
+    font-size: 0.67em;
   }
   .info-name-panel  { height: auto; min-height: 0; }
   .info-panels-inner { gap: 6px; }
   .ipanel-inner { padding: 8px 10px; }
-  .ipanel-name  { font-size: clamp(0.8rem, 3vh, 1.1rem); }
-  .ipanel-specs { font-size: clamp(0.55rem, 1.8vh, 0.75rem); }
   .info-cart-panel { width: auto; margin-right: 0; }
 
   /* ── Mobile shop overlay must be hidden ─────────────────────────────────── */
