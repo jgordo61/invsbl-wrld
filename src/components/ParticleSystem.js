@@ -8,7 +8,7 @@ const REPEL_FORCE   = 0.11    // push strength at contact
 const SPRING_K      = 0.038   // spring stiffness back to rest position
 const DAMPING       = 0.86    // velocity drag per frame
 const NOISE         = 0.0003  // ambient shimmer magnitude
-const CENTRIFUGAL_K = 0.5     // centrifugal scatter scale (ω² × K × r pushes outward)
+const CENTRIFUGAL_K = 0.1     // centrifugal scatter scale (ω² × K × r pushes outward)
 
 // ── One shared circle sprite ──────────────────────────────────────────────────
 const _sprite = (() => {
