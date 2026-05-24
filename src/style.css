@@ -1446,7 +1446,8 @@ html, body {
   }
   .cue-line { height: 1.2rem; }
 
-  /* ── Shop: desktop HUD elements must be visible ──────────────────────────── */
+  /* ── Shop: force HUD overlay and its children visible ───────────────────── */
+  #hud-overlay  { display: block !important; }
   .gallery-wrap { display: block; }
   .info-panels  { display: flex; }
 
