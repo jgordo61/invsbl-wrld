@@ -1432,7 +1432,7 @@ html, body {
 /* ════════════════════════════════════════════════════════════════════════════
    LANDSCAPE MOBILE  — phones rotated sideways get the desktop HUD layout
    ════════════════════════════════════════════════════════════════════════════ */
-@media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+@media (max-height: 500px) and (orientation: landscape) {
 
   /* ── Landing: shrink title so it doesn't fight the scroll cue ────────────── */
   .ch--locked {
