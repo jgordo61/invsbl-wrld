@@ -8,6 +8,7 @@ const REPEL_FORCE   = 0.11    // push strength at contact
 const SPRING_K      = 0.038   // spring stiffness back to rest position
 const DAMPING       = 0.86    // velocity drag per frame
 const NOISE         = 0.0003  // ambient shimmer magnitude
+const CENTRIFUGAL_K = 0.5     // centrifugal scatter scale (ω² × K × r pushes outward)
 
 // ── One shared circle sprite ──────────────────────────────────────────────────
 const _sprite = (() => {
@@ -30,6 +31,7 @@ export class ParticleSystem {
     this._vel    = new Float32Array(COUNT * 3)
     this._pos    = new Float32Array(COUNT * 3)
     this._mouse  = new THREE.Vector3(9999, 9999, 9999)
+    this._omega  = 0   // angular velocity (rad/frame) for centrifugal force
     this._active = false
     this._frame  = 0   // shimmer throttle counter
 
@@ -131,6 +133,9 @@ export class ParticleSystem {
   // ── Called every frame with mouse position in this object's local space ───
   setMouseLocal(v3) { this._mouse.copy(v3) }
 
+  // ── Angular velocity (rad/frame) driving centrifugal scatter ─────────────
+  setAngularVelocity(omega) { this._omega = omega }
+
   // ── Per-frame physics ─────────────────────────────────────────────────────
   update() {
     if (!this._active) return
@@ -144,6 +149,9 @@ export class ParticleSystem {
     const R2      = REPEL_R * REPEL_R
     // Apply shimmer only every 3rd frame — cuts 30k random calls to 10k
     const shimmer = (++this._frame % 3 === 0)
+    // Centrifugal: ω² × K applied per-particle as pos[x/z] * centF
+    // (force is proportional to radius from Y axis — no sqrt needed)
+    const centF   = this._omega * this._omega * CENTRIFUGAL_K
 
     for (let i = 0; i < COUNT; i++) {
       const ix = i * 3, iy = ix + 1, iz = ix + 2
@@ -160,6 +168,13 @@ export class ParticleSystem {
         vel[ix] += (dx / dist) * force
         vel[iy] += (dy / dist) * force
         vel[iz] += (dz / dist) * force
+      }
+
+      // ── Centrifugal force — outward in XZ plane from Y rotation axis ───────
+      // vel += pos * centF because F = ω²·K·r and direction = pos/r → pos·centF
+      if (centF > 1e-7) {
+        vel[ix] += pos[ix] * centF
+        vel[iz] += pos[iz] * centF
       }
 
       // ── Spring back to rest + ambient shimmer (throttled) ─────────────────

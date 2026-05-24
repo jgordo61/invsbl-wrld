@@ -251,12 +251,21 @@ export class JewelryViewer extends THREE.EventDispatcher {
       )
     }
 
-    // Particle physics — convert world-space mouse to pivot-local space
-    if (this._particles && mouseWorld) {
-      // Ensure matrices are current after this frame's rotation
+    // Particle physics
+    if (this._particles) {
       this.group.updateWorldMatrix(false, true)
-      const localMouse = this._pivot.worldToLocal(mouseWorld.clone())
-      this._particles.setMouseLocal(localMouse)
+
+      // Mouse repulsion: desktop only.
+      // On touch devices the cursor doesn't exist, so skip repulsion and rely
+      // on centrifugal force instead.
+      const onTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+      if (!onTouch && mouseWorld) {
+        const localMouse = this._pivot.worldToLocal(mouseWorld.clone())
+        this._particles.setMouseLocal(localMouse)
+      }
+
+      // Centrifugal scatter — always active, scales with current spin speed
+      this._particles.setAngularVelocity(this._velX * 0.01)
       this._particles.update()
     }
   }
