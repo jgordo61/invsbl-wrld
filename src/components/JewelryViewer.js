@@ -264,8 +264,6 @@ export class JewelryViewer extends THREE.EventDispatcher {
         this._particles.setMouseLocal(localMouse)
       }
 
-      // Centrifugal scatter — always active, scales with current spin speed
-      this._particles.setAngularVelocity(this._velX * 0.01)
       this._particles.update()
     }
   }
