@@ -378,7 +378,7 @@ export class HUD {
 
     const lm     = this._isLandscapeMobile()
     const scale  = lm ? 0.38 : 1
-    const panelW = Math.round(PANEL_W * scale)
+    const panelW = Math.round(PANEL_W * scale * (lm ? 1.2 : 1))   // 20% wider in landscape
     const panelH = Math.round(PANEL_H * scale)
     const tStep  = this._tStep()
 
