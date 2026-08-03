@@ -53,7 +53,7 @@ const photosFor = (name) => {
 // ════════════════════════════════════════════════════════════════════════════
 const CATALOG = [
   {
-    name: 'CRESCENT GRADIENT', collection: 'INVSBL', price: '',
+    name: 'CRESCENT GRADIENT', collection: 'INVSBL', price: 80,
     modelUrl: '/models/Low Poly GLB/Crescent Low Poly.glb',
     images: [],
     specs: [
@@ -65,7 +65,7 @@ const CATALOG = [
     ]
   },
   {
-    name: 'HALF CRESCENT GRADIENT', collection: 'INVSBL', price: '',
+    name: 'HALF CRESCENT GRADIENT', collection: 'INVSBL', price: 80,
     modelUrl: '/models/Low Poly GLB/Crescent Half-Gradient Low Poly.glb',
     images: [],
     specs: [
@@ -77,7 +77,7 @@ const CATALOG = [
     ]
   },
   {
-    name: 'CLOUD BENGAL', collection: 'INVSBL', price: '',
+    name: 'CLOUD BENGAL', collection: 'INVSBL', price: 50,
     modelUrl: '/models/Low Poly GLB/Cloud Bengal Low Poly.glb',
     images: [],
     specs: [
@@ -89,7 +89,7 @@ const CATALOG = [
     ]
   },
   {
-    name: 'EPSILON', collection: 'INVSBL', price: '',
+    name: 'EPSILON', collection: 'INVSBL', price: 77,
     modelUrl: '/models/Low Poly GLB/Epsilon Low Poly.glb',
     images: [],
     specs: [
@@ -101,7 +101,7 @@ const CATALOG = [
     ]
   },
   {
-    name: 'HYPERCUBE', collection: 'INVSBL', price: '',
+    name: 'HYPERCUBE', collection: 'INVSBL', price: 285,
     modelUrl: '/models/Low Poly GLB/Hypercube LowPoly.glb',
     images: [],
     specs: [
@@ -113,7 +113,7 @@ const CATALOG = [
     ]
   },
   {
-    name: 'GINSENG RITUAL', collection: 'INVSBL', price: '',
+    name: 'GINSENG RITUAL', collection: 'INVSBL', price: 600,
     modelUrl: '/models/Low Poly GLB/Ginseng Ritual Low Poly.glb',
     images: [],
     specs: [
@@ -389,7 +389,7 @@ function updateHUD() {
   const item = shop.currentItem
   currentIdx.textContent = String(idx + 1).padStart(2, '0')
   itemName.textContent   = item.name
-  itemPrice.textContent  = item.price
+  itemPrice.textContent  = item.price ? '$' + Number(item.price).toFixed(2) : ''
   itemColl.textContent   = item.collection
   itemDots.querySelectorAll('.dot').forEach((d, i) =>
     d.classList.toggle('active', i === idx)
@@ -536,7 +536,7 @@ function renderCart() {
       <div class="cart-item-info">
         <p class="cart-item-name">${entry.name}</p>
         <p class="cart-item-collection">${entry.collection}</p>
-        ${entry.price ? `<p class="cart-item-price">${entry.price}</p>` : ''}
+        ${entry.price ? `<p class="cart-item-price">$${Number(entry.price).toFixed(2)}</p>` : ''}
       </div>
       <div class="cart-item-controls">
         <button class="qty-btn" data-action="dec" data-name="${entry.name}">−</button>
@@ -614,7 +614,28 @@ addToCartBtn.addEventListener('click', () => {
 cartToggleBtn.addEventListener('click', () => cartOpen ? closeCart() : openCart())
 cartCloseBtn.addEventListener('click', closeCart)
 
-cartCheckout.addEventListener('click', () => {
-  // Future: hand off to payment provider
-  console.log('[INVSBL WRLD] Checkout:', cartItems)
+cartCheckout.addEventListener('click', async () => {
+  if (cartItems.length === 0 || cartCheckout.disabled) return
+
+  const originalText = cartCheckout.textContent
+  cartCheckout.disabled    = true
+  cartCheckout.textContent = 'REDIRECTING…'
+
+  try {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: cartItems.map(c => ({ name: c.name, qty: c.qty })),
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok || !data.url) throw new Error(data.error || 'Checkout failed')
+    window.location.href = data.url
+  } catch (err) {
+    console.error('[INVSBL WRLD] Checkout error:', err)
+    cartCheckout.disabled    = false
+    cartCheckout.textContent = originalText
+    alert('Sorry — checkout could not be started. Please try again.')
+  }
 })
