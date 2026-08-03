@@ -15,77 +15,113 @@ function isMobile() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+//  PHOTOS — auto-loaded from src/assets/photos/<piece-name>/
+//  Drop image files into a folder named after the piece (see ADDING_JEWELRY.md).
+//  Folder names are matched to CATALOG item names loosely (case/spacing/
+//  punctuation-insensitive), so "Crescent Gradient" and "crescent-gradient"
+//  both match the CRESCENT GRADIENT item. Each filename must start with the
+//  gallery slot number it belongs in — "1.jpg" fills VIEW·01, "2.jpg" fills
+//  VIEW·02, etc. A missing number leaves that slot on NO SIGNAL.
+// ════════════════════════════════════════════════════════════════════════════
+const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+const photoModules = import.meta.glob(
+  './assets/photos/*/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}',
+  { eager: true, import: 'default' }
+)
+const slotsBySlug = {}
+for (const path in photoModules) {
+  const match = path.match(/\/photos\/([^/]+)\/([^/]+)$/)
+  if (!match) continue
+  const [, folder, filename] = match
+  const slot = parseInt(filename, 10)   // leading number in the filename → slot #
+  if (!Number.isFinite(slot) || slot < 1) continue
+  ;(slotsBySlug[slugify(folder)] ??= {})[slot] = photoModules[path]
+}
+const photosFor = (name) => {
+  const slots = slotsBySlug[slugify(name)]
+  if (!slots) return []
+  const maxSlot = Math.max(...Object.keys(slots).map(Number))
+  return Array.from({ length: maxSlot }, (_, i) => slots[i + 1] ?? null)
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  CATALOG — add your jewelry pieces here.
 //  • modelUrl: null → uses proxy shape while you work without GLB files.
 //  • Drop a .glb file in /public/models/ and set modelUrl: '/models/file.glb'
+//  • images: auto-populated below from src/assets/photos/ — no need to edit.
 // ════════════════════════════════════════════════════════════════════════════
-// ── images: drop real photo paths here when ready.
-//    Each array has three slots — one per HUD panel (top, mid, bottom).
-//    Set a slot to null to show the NO SIGNAL placeholder.
 const CATALOG = [
   {
     name: 'CRESCENT GRADIENT', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Crescent Low Poly.glb',
-    images: [null, null, null, null, null, null, null, null, null, null],
+    images: [],
     specs: [
-      'MATERIAL — 925 STERLING SILVER',
-      'FINISH — GRADIENT OXIDISATION',
+      'MATERIAL — 316L STAINLESS STEEL',
+      'FINISH — POLISHED & SANDBLASTED',
       'FORM — OPEN CRESCENT',
-      'DIMENSIONS — 32 × 18 MM',
+      'DIMENSIONS — 25.4 × 6.2 MM',
       'WEIGHT — 4.2 G',
-      'COLLECTION — INVSBL',
     ]
   },
   {
     name: 'HALF CRESCENT GRADIENT', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Crescent Half-Gradient Low Poly.glb',
-    images: [null, null, null, null, null, null, null, null, null, null],
+    images: [],
     specs: [
-      'MATERIAL — 925 STERLING SILVER',
-      'FINISH — HALF GRADIENT OXIDISATION',
+      'MATERIAL — 316L STAINLESS STEEL',
+      'FINISH — POLISHED & SANDBLASTED',
       'FORM — HALF CRESCENT',
-      'DIMENSIONS — 28 × 14 MM',
+      'DIMENSIONS — 25.4 × 6.2 MM',
       'WEIGHT — 3.6 G',
-      'COLLECTION — INVSBL',
     ]
   },
   {
     name: 'CLOUD BENGAL', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Cloud Bengal Low Poly.glb',
-    images: [null, null, null, null, null, null, null, null, null, null],
+    images: [],
     specs: [
-      'MATERIAL — 925 STERLING SILVER',
-      'FINISH — BRUSHED MATTE',
+      'MATERIAL — WHITE OSBY',
+      'FINISH — TUMBLE POLISH',
       'FORM — CLOUD SILHOUETTE',
-      'DIMENSIONS — 38 × 22 MM',
+      'DIMENSIONS — 17.5 × 2.75 MM',
       'WEIGHT — 5.8 G',
-      'COLLECTION — INVSBL',
-    ]
-  },
-  {
-    name: 'HYPERCUBE', collection: 'INVSBL', price: '',
-    modelUrl: '/models/Low Poly GLB/Hypercube LowPoly.glb',
-    images: [null, null, null, null, null, null, null, null, null, null],
-    specs: [
-      'MATERIAL — 925 STERLING SILVER',
-      'FINISH — HIGH POLISH',
-      'FORM — TESSERACT PROJECTION',
-      'DIMENSIONS — 24 × 24 MM',
-      'WEIGHT — 6.1 G',
-      'COLLECTION — INVSBL',
     ]
   },
   {
     name: 'EPSILON', collection: 'INVSBL', price: '',
     modelUrl: '/models/Low Poly GLB/Epsilon Low Poly.glb',
-    images: [null, null, null, null, null, null, null, null, null, null],
+    images: [],
     specs: [
       'MATERIAL — 925 STERLING SILVER',
-      'FINISH — SATIN',
-      'FORM — EPSILON SYMBOL',
-      'DIMENSIONS — 20 × 30 MM',
+      'FINISH — HIGH POLISH',
+      'FORM — EPSILON',
+      'DIMENSIONS — 27 × 4.35 MM',
       'WEIGHT — 3.9 G',
-      'COLLECTION — INVSBL',
+    ]
+  },
+  {
+    name: 'HYPERCUBE', collection: 'INVSBL', price: '',
+    modelUrl: '/models/Low Poly GLB/Hypercube LowPoly.glb',
+    images: [],
+    specs: [
+      'MATERIAL — 925 STERLING SILVER',
+      'FINISH — HIGH POLISH',
+      'FORM — AKASHIC PROJECTION',
+      'DIMENSIONS — 17.7 × 31 × 29 MM',
+      'WEIGHT — 6.1 G',
+    ]
+  },
+  {
+    name: 'GINSENG RITUAL', collection: 'INVSBL', price: '',
+    modelUrl: '/models/Low Poly GLB/Ginseng Ritual Low Poly.glb',
+    images: [],
+    specs: [
+      'MATERIAL — 925 STERLING, GLASS, ORGANIC',
+      'FINISH — HIGH POLISH',
+      'FORM — RITUALIZED ELIXIR',
+      'DIMENSIONS — 52.3 × 20 × 22 MM',
+      'WEIGHT — 9 G',
     ]
   },
   {
@@ -99,11 +135,15 @@ const CATALOG = [
       '01 — CRESCENT GRADIENT',
       '02 — HALF CRESCENT GRADIENT',
       '03 — CLOUD BENGAL',
-      '04 — HYPERCUBE',
-      '05 — EPSILON',
+      '04 — EPSILON',
+      '05 — HYPERCUBE',
+      '06 — GINSENG RITUAL',
     ]
   }
 ]
+
+// Populate real photos from src/assets/photos/<piece-name>/ (skips TOC entries)
+CATALOG.forEach(item => { if (!item.toc) item.images = photosFor(item.name) })
 
 // ════════════════════════════════════════════════════════════════════════════
 //  DOM
@@ -414,6 +454,7 @@ window.addEventListener('keydown', (e) => {
     return
   }
   if (!shop) return
+  if (hud.isLightboxOpen()) return   // let the lightbox own arrow keys while open
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') shop.next()
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') {
     if (shop.current === 0) exitShop()
