@@ -74,6 +74,7 @@ export async function onRequestPost({ request, env }) {
         },
         checkout_options: {
           redirect_url: siteOrigin,
+          ask_for_shipping_address: true,
         },
       }),
     })
