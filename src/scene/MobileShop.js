@@ -96,11 +96,10 @@ export class MobileShop {
     this._specsEl = document.createElement('div')
     this._specsEl.className = 'mob-specs-block'
 
-    // CONTINUE cue — tapping advances to next item
+    // Continue cue — tapping advances to next item
     this._cueEl = document.createElement('div')
     this._cueEl.className = 'mob-continue-cue'
     this._cueEl.innerHTML = `
-      <span class="mob-cue-text">CONTINUE</span>
       <div class="mob-cue-line"></div>
     `
     this._cueEl.addEventListener('click', () => this._onNext?.())
@@ -140,7 +139,7 @@ export class MobileShop {
 
     imgs.forEach((url, i) => {
       const thumb = document.createElement('div')
-      thumb.className = 'mob-thumb'
+      thumb.className = url ? 'mob-thumb has-photo' : 'mob-thumb'
 
       if (url) {
         const img = document.createElement('img')

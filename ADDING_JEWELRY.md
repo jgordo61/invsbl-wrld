@@ -1,5 +1,35 @@
 # Adding Jewelry to INVSBL WRLD
 
+## Adding gallery photos
+
+Photos live in `src/assets/photos/<piece-name>/` — one folder per piece.
+
+1. **Create/use the folder** matching the piece's name (case, spaces, and
+   punctuation don't matter — `Crescent Gradient`, `crescent-gradient`, and
+   `CRESCENT_GRADIENT` all match the `CRESCENT GRADIENT` catalog item):
+   ```
+   src/assets/photos/
+   ├── crescent-gradient/
+   ├── half-crescent-gradient/
+   ├── cloud-bengal/
+   ├── hypercube/
+   └── epsilon/
+   ```
+2. **Drop image files in** (`.jpg`, `.png`, `.webp`, or `.avif`), named
+   `1.jpg`, `2.jpg`, `3.jpg`, etc. The leading number in the filename is the
+   exact gallery slot it fills — `2.jpg` always shows in the VIEW·02 panel,
+   even if `1.jpg` is missing (that slot just shows NO SIGNAL instead of
+   shifting everything down).
+3. That's it — `main.js` auto-loads every numbered image in a matching folder
+   into that piece's gallery on the next `npm run dev` / `npm run build`. No
+   code edits needed. Folders can hold anywhere from 0 to as many photos as
+   you want. Files that don't start with a number are ignored.
+
+**Recommended dimensions:** ~1600×900px landscape (16:9), under ~400KB each.
+The gallery panels crop to a wide letterbox (`object-fit: cover`), and the
+click-to-zoom lightbox shows the full image (`object-fit: contain`) — 16:9
+crops cleanly into the panels and fits the lightbox with minimal letterboxing.
+
 ## How to add a new piece
 
 1. **Export your 3D jewelry model** as a `.glb` file.

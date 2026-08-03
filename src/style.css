@@ -33,7 +33,6 @@ html, body {
   background: var(--white);
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
-  filter: grayscale(100%);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -758,16 +757,17 @@ html, body {
   animation: panel-hover-flicker 1.3s linear infinite;
 }
 
-/* Image fills the panel above the label row */
+/* Image fills the whole panel — the label strip at the bottom sits on its
+   own solid black bar (see .gpanel-inner.has-photo .hud-label below) rather
+   than reserving a gap in the photo itself. */
 .gpanel-img {
   position: absolute;
-  inset: 0 0 22px 0;
+  inset: 0;
   width: 100%;
-  height: calc(100% - 22px);
+  height: 100%;
   object-fit: cover;
   display: block;
-  /* Ice-blue tint: desaturate then shift hue toward cyan */
-  filter: grayscale(60%) sepia(35%) hue-rotate(170deg) brightness(1.08) contrast(1.05);
+  filter: grayscale(100%);
   opacity: 0.90;
 }
 
@@ -834,6 +834,16 @@ html, body {
   color: rgba(10, 10, 10, 0.65);
   text-transform: uppercase;
   line-height: 1;
+}
+
+/* Photo panels: solid black bar behind the label so [ VIEW·NN ] stays
+   legible over whatever the photo looks like underneath it. */
+.gpanel-inner.has-photo .hud-label {
+  background: rgba(10, 10, 10, 0.88);
+  color: rgba(255, 255, 255, 0.85);
+}
+.gpanel-inner.has-photo .hud-cursor {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .hud-cursor {
@@ -1103,7 +1113,6 @@ html, body {
   max-height: 100%;
   object-fit: contain;
   display: block;
-  filter: grayscale(100%) contrast(1.08) brightness(0.96);
 }
 
 .lb-nosignal {
@@ -1141,6 +1150,15 @@ html, body {
 .lb-close:hover {
   color: rgba(255, 255, 255, 0.9);
   border-color: rgba(255, 255, 255, 0.6);
+}
+
+.lb-counter {
+  position: absolute;
+  top: -38px; left: 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* ── Global ───────────────────────────────────────────────────────────────── */
@@ -1210,11 +1228,11 @@ html, body {
 
   .mob-thumb-img {
     position: absolute;
-    inset: 0 0 18px 0;
+    inset: 0;
     width: 100%;
-    height: calc(100% - 18px);
+    height: 100%;
     object-fit: cover;
-    filter: grayscale(60%) sepia(35%) hue-rotate(170deg) brightness(1.08) contrast(1.05);
+    filter: grayscale(100%);
   }
 
   .mob-thumb-nosig {
@@ -1238,6 +1256,16 @@ html, body {
     letter-spacing: 0.18em;
     color: rgba(10,10,10,0.50);
     line-height: 1;
+  }
+
+  /* Photo thumbs: solid black bar behind the label so it stays legible
+     over whatever the photo looks like underneath it. */
+  .mob-thumb.has-photo .mob-thumb-label {
+    background: rgba(10, 10, 10, 0.88);
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .mob-thumb.has-photo .hud-cursor {
+    color: rgba(255, 255, 255, 0.9);
   }
 
   /* ── Transparent 3D spacer — 25vh→77.5vh, touches reach canvas ─────────── */

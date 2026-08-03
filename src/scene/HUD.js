@@ -142,6 +142,7 @@ export class HUD {
     this._lbEl.innerHTML = `
       <div class="lb-backdrop"></div>
       <div class="lb-frame">
+        <div    class="lb-counter"></div>
         <button class="lb-close" aria-label="Close">✕</button>
         <img  class="lb-img"      src="" alt="" />
         <div  class="lb-nosignal">NO SIGNAL</div>
@@ -149,7 +150,12 @@ export class HUD {
     `
     this._lbEl.querySelector('.lb-backdrop').addEventListener('click', () => this._closeLightbox())
     this._lbEl.querySelector('.lb-close').addEventListener('click',    () => this._closeLightbox())
-    window.addEventListener('keydown', e => { if (e.key === 'Escape') this._closeLightbox() })
+    window.addEventListener('keydown', e => {
+      if (!this.isLightboxOpen()) return
+      if (e.key === 'Escape')          this._closeLightbox()
+      else if (e.key === 'ArrowRight') { e.preventDefault(); this._navLightbox(1) }
+      else if (e.key === 'ArrowLeft')  { e.preventDefault(); this._navLightbox(-1) }
+    })
 
     // Right-side info panels (direct children of overlay, not inside gallery-wrap)
     // _infoEl  — positioning wrapper only; CSS transform:translateY(-50%) must NEVER be
@@ -205,7 +211,7 @@ export class HUD {
       const el = document.createElement('div')
       el.className = 'hud-gpanel'
       el.innerHTML = `
-        <div class="gpanel-inner">
+        <div class="gpanel-inner${url ? ' has-photo' : ''}">
           ${url
             ? `<img src="${url}" alt="" class="gpanel-img" />`
             : `<div class="hud-nosignal">NO SIGNAL</div>`
@@ -234,7 +240,7 @@ export class HUD {
       // Click opens lightbox only when the pointer wasn't dragged
       el.addEventListener('click', () => {
         if (this._dragMoved) return
-        this._openLightbox(url)
+        this._openLightbox(i)
       })
 
       this._wrap.appendChild(el)
@@ -473,8 +479,12 @@ export class HUD {
 
   // ── Lightbox ─────────────────────────────────────────────────────────────────
 
-  _openLightbox(url) {
-    const frame = this._lbEl.querySelector('.lb-frame')
+  isLightboxOpen() {
+    return this._lbEl.style.display === 'flex'
+  }
+
+  _renderLightboxImage() {
+    const url   = this._panels[this._lbIndex]?.url
     const img   = this._lbEl.querySelector('.lb-img')
     const noSig = this._lbEl.querySelector('.lb-nosignal')
 
@@ -487,6 +497,15 @@ export class HUD {
       noSig.style.display = 'flex'
     }
 
+    const counter = this._lbEl.querySelector('.lb-counter')
+    counter.textContent = `[ VIEW·${String(this._lbIndex + 1).padStart(2, '0')} / ${String(this._panels.length).padStart(2, '0')} ]`
+  }
+
+  _openLightbox(index) {
+    this._lbIndex = index
+    this._renderLightboxImage()
+
+    const frame = this._lbEl.querySelector('.lb-frame')
     this._lbEl.style.display = 'flex'
     gsap.fromTo(this._lbEl.querySelector('.lb-backdrop'),
       { opacity: 0 },
@@ -494,6 +513,22 @@ export class HUD {
     gsap.fromTo(frame,
       { opacity: 0, scale: 0.88, y: 18 },
       { opacity: 1, scale: 1,    y: 0,  duration: 0.4, ease: 'power3.out' })
+  }
+
+  // Arrow-key navigation between images while the lightbox is open — wraps around.
+  _navLightbox(delta) {
+    const n = this._panels.length
+    if (!n) return
+    this._lbIndex = (this._lbIndex + delta + n) % n
+
+    const img = this._lbEl.querySelector('.lb-img')
+    gsap.to(img, {
+      opacity: 0, duration: 0.12, ease: 'power2.in',
+      onComplete: () => {
+        this._renderLightboxImage()
+        gsap.to(img, { opacity: 1, duration: 0.18, ease: 'power2.out' })
+      }
+    })
   }
 
   _closeLightbox(immediate = false) {
