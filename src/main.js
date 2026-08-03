@@ -51,11 +51,22 @@ const photosFor = (name) => {
 //  • Drop a .glb file in /public/models/ and set modelUrl: '/models/file.glb'
 //  • images: auto-populated below from src/assets/photos/ — no need to edit.
 // ════════════════════════════════════════════════════════════════════════════
+// Gauged piercing sizes shared by both crescent pieces — 0G and 00G cost more.
+const GAUGE_SIZES = [
+  { label: '6G',  price: 80 },
+  { label: '4G',  price: 80 },
+  { label: '2G',  price: 80 },
+  { label: '1G',  price: 80 },
+  { label: '0G',  price: 90 },
+  { label: '00G', price: 90 },
+]
+
 const CATALOG = [
   {
     name: 'CRESCENT GRADIENT', collection: 'INVSBL', price: 80,
     modelUrl: '/models/Low Poly GLB/Crescent Low Poly.glb',
     images: [],
+    sizes: GAUGE_SIZES,
     specs: [
       'MATERIAL — 316L STAINLESS STEEL',
       'FINISH — POLISHED & SANDBLASTED',
@@ -68,6 +79,7 @@ const CATALOG = [
     name: 'HALF CRESCENT GRADIENT', collection: 'INVSBL', price: 80,
     modelUrl: '/models/Low Poly GLB/Crescent Half-Gradient Low Poly.glb',
     images: [],
+    sizes: GAUGE_SIZES,
     specs: [
       'MATERIAL — 316L STAINLESS STEEL',
       'FINISH — POLISHED & SANDBLASTED',
@@ -186,6 +198,13 @@ document.addEventListener('toc-goto', e => {
   if (shop) shop.goTo(e.detail.index)
 })
 
+// Gauge/size picker (HUD or MobileShop) fires 'size-select' when a size chip
+// is clicked. Reset whenever the shop item changes (see 'change' listener below).
+let selectedSize = null   // { label, price } | null
+document.addEventListener('size-select', e => {
+  selectedSize = e.detail
+})
+
 // ── LandingScene — 3D letter renderer ────────────────────────────────────────
 const landingGL = document.getElementById('landing-gl')
 const landingScene = new LandingScene(landingGL)
@@ -265,6 +284,7 @@ async function enterShop() {
       updateHUD()
       shop.addEventListener('exit', () => exitShop())
       shop.addEventListener('change', () => {
+        selectedSize = null   // require re-picking a size on every new item
         updateHUD()
         // Both guards internally — only the active one actually runs
         hud.update(shop.currentItem, shop.current)
@@ -502,25 +522,40 @@ window.addEventListener('orientationchange', () => {
 // ════════════════════════════════════════════════════════════════════════════
 //  CART
 // ════════════════════════════════════════════════════════════════════════════
-let cartItems = []   // [{ name, collection, price, qty }, …]
+let cartItems = []   // [{ name, collection, price, qty, size }, …] — size is a gauge label or null
 let cartOpen  = false
 
+// Sized items (e.g. gauged piercings) need their own cart line per size,
+// so identity is name+size rather than just name.
+function _cartKey(entry) {
+  return entry.size ? `${entry.name}__${entry.size}` : entry.name
+}
+
 // ── State helpers ─────────────────────────────────────────────────────────
-function _cartAdd(item) {
-  const existing = cartItems.find(c => c.name === item.name)
+// `size` is the selected { label, price } from item.sizes, or null for
+// items that don't need sizing.
+function _cartAdd(item, size) {
+  const entry = {
+    name: item.name,
+    collection: item.collection,
+    price: size ? size.price : item.price,
+    size:  size ? size.label : null,
+  }
+  const key      = _cartKey(entry)
+  const existing = cartItems.find(c => _cartKey(c) === key)
   if (existing) { existing.qty++ }
-  else          { cartItems.push({ ...item, qty: 1 }) }
+  else          { cartItems.push({ ...entry, qty: 1 }) }
 }
 
-function _cartRemove(name) {
-  cartItems = cartItems.filter(c => c.name !== name)
+function _cartRemove(key) {
+  cartItems = cartItems.filter(c => _cartKey(c) !== key)
 }
 
-function _cartUpdateQty(name, delta) {
-  const entry = cartItems.find(c => c.name === name)
+function _cartUpdateQty(key, delta) {
+  const entry = cartItems.find(c => _cartKey(c) === key)
   if (!entry) return
   entry.qty += delta
-  if (entry.qty <= 0) _cartRemove(name)
+  if (entry.qty <= 0) _cartRemove(key)
 }
 
 // ── Render cart body ──────────────────────────────────────────────────────
@@ -535,15 +570,15 @@ function renderCart() {
     <div class="cart-item">
       <div class="cart-item-info">
         <p class="cart-item-name">${entry.name}</p>
-        <p class="cart-item-collection">${entry.collection}</p>
+        <p class="cart-item-collection">${entry.collection}${entry.size ? ' · GAUGE ' + entry.size : ''}</p>
         ${entry.price ? `<p class="cart-item-price">$${Number(entry.price).toFixed(2)}</p>` : ''}
       </div>
       <div class="cart-item-controls">
-        <button class="qty-btn" data-action="dec" data-name="${entry.name}">−</button>
+        <button class="qty-btn" data-action="dec" data-key="${_cartKey(entry)}">−</button>
         <span class="qty-value">${entry.qty}</span>
-        <button class="qty-btn" data-action="inc" data-name="${entry.name}">+</button>
+        <button class="qty-btn" data-action="inc" data-key="${_cartKey(entry)}">+</button>
       </div>
-      <button class="cart-item-remove" data-name="${entry.name}" aria-label="Remove">✕</button>
+      <button class="cart-item-remove" data-key="${_cartKey(entry)}" aria-label="Remove">✕</button>
     </div>
   `).join('')
 
@@ -559,14 +594,14 @@ function renderCart() {
   // Delegate qty / remove clicks
   cartBodyEl.querySelectorAll('.qty-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      _cartUpdateQty(btn.dataset.name, btn.dataset.action === 'inc' ? 1 : -1)
+      _cartUpdateQty(btn.dataset.key, btn.dataset.action === 'inc' ? 1 : -1)
       renderCart()
       updateCartBadge()
     })
   })
   cartBodyEl.querySelectorAll('.cart-item-remove').forEach(btn => {
     btn.addEventListener('click', () => {
-      _cartRemove(btn.dataset.name)
+      _cartRemove(btn.dataset.key)
       renderCart()
       updateCartBadge()
     })
@@ -605,7 +640,9 @@ function closeCart() {
 // ── Wire up cart controls ─────────────────────────────────────────────────
 addToCartBtn.addEventListener('click', () => {
   if (!shop) return
-  _cartAdd(shop.currentItem)
+  const item = shop.currentItem
+  if (item.sizes && !selectedSize) return   // UI should already block this — safety net
+  _cartAdd(item, item.sizes ? selectedSize : null)
   renderCart()
   updateCartBadge()
   openCart()
@@ -626,7 +663,7 @@ cartCheckout.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        items: cartItems.map(c => ({ name: c.name, qty: c.qty })),
+        items: cartItems.map(c => ({ name: c.name, qty: c.qty, size: c.size })),
       }),
     })
     const data = await res.json()

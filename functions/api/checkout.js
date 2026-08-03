@@ -15,14 +15,18 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 // Authoritative prices (USD cents) — keep in sync with CATALOG in src/main.js.
-// Client-submitted prices are never used; only names are looked up here.
-const PRICES = {
-  'CRESCENT GRADIENT':      8000,
-  'HALF CRESCENT GRADIENT': 8000,
-  'CLOUD BENGAL':           5000,
-  'EPSILON':                7700,
-  'HYPERCUBE':              28500,
-  'GINSENG RITUAL':         60000,
+// Client-submitted prices are never used; only (name, size) are looked up here.
+const FLAT_PRICES = {
+  'CLOUD BENGAL':   5000,
+  'EPSILON':        7700,
+  'HYPERCUBE':      28500,
+  'GINSENG RITUAL': 60000,
+}
+
+// Gauged piercings — require a size, priced per gauge.
+const SIZED_PRICES = {
+  'CRESCENT GRADIENT':      { '6G': 8000, '4G': 8000, '2G': 8000, '1G': 8000, '0G': 9000, '00G': 9000 },
+  'HALF CRESCENT GRADIENT': { '6G': 8000, '4G': 8000, '2G': 8000, '1G': 8000, '0G': 9000, '00G': 9000 },
 }
 
 export async function onRequestPost({ request, env }) {
@@ -36,13 +40,23 @@ export async function onRequestPost({ request, env }) {
 
     const lineItems = []
     for (const raw of cart) {
-      const name  = String(raw?.name ?? '')
-      const price = PRICES[name]
-      if (!price) continue   // unknown item — ignore rather than trust client data
+      const name = String(raw?.name ?? '')
+      const size = raw?.size ? String(raw.size) : null
+
+      let price, displayName
+      if (SIZED_PRICES[name]) {
+        price = size ? SIZED_PRICES[name][size] : undefined
+        if (!price) continue   // sized item with no/invalid size — reject rather than guess
+        displayName = `${name} — ${size}`
+      } else {
+        price = FLAT_PRICES[name]
+        if (!price) continue   // unknown item — ignore rather than trust client data
+        displayName = name
+      }
 
       const qty = Math.max(1, Math.min(20, Math.floor(Number(raw?.qty)) || 1))
       lineItems.push({
-        name,
+        name: displayName,
         quantity: String(qty),
         base_price_money: { amount: price, currency: 'USD' },
       })

@@ -173,6 +173,10 @@ export class HUD {
     this._specsPanelEl = document.createElement('div')
     this._specsPanelEl.className = 'info-panel info-spec-panel'
 
+    // Size (gauge) picker — only shown for items with item.sizes
+    this._sizePanelEl = document.createElement('div')
+    this._sizePanelEl.className = 'info-panel info-size-panel'
+
     // Cart button panel — small, right-aligned, sits under the right corner of the specs panel
     this._cartBtnPanelEl = document.createElement('div')
     this._cartBtnPanelEl.className = 'info-panel info-cart-panel'
@@ -187,6 +191,7 @@ export class HUD {
 
     this._infoInnerEl.appendChild(this._namePanelEl)
     this._infoInnerEl.appendChild(this._specsPanelEl)
+    this._infoInnerEl.appendChild(this._sizePanelEl)
     this._infoInnerEl.appendChild(this._cartBtnPanelEl)
     this._infoEl.appendChild(this._infoInnerEl)
     this._el.appendChild(this._infoEl)
@@ -293,6 +298,47 @@ export class HUD {
 
     // Hide the cart button on non-purchasable items (e.g. table of contents)
     this._cartBtnPanelEl.style.display = item.toc ? 'none' : ''
+
+    this._setSizePanel(item)
+  }
+
+  // Gauge/size picker — only rendered for items with item.sizes. Selecting a
+  // chip dispatches 'size-select' (consumed by main.js) and unlocks the cart
+  // button; every fresh render starts deselected so a size must be re-picked
+  // per item, per visit.
+  _setSizePanel(item) {
+    const cartBtn = this._cartBtnPanelEl.querySelector('.ipanel-cart-btn')
+
+    if (!item.sizes?.length) {
+      this._sizePanelEl.style.display = 'none'
+      this._sizePanelEl.innerHTML = ''
+      if (cartBtn) cartBtn.disabled = false
+      return
+    }
+
+    this._sizePanelEl.style.display = ''
+    this._sizePanelEl.innerHTML = `
+      <div class="ipanel-inner">
+        <div class="ipanel-size-header">SELECT GAUGE</div>
+        <div class="ipanel-size-options">
+          ${item.sizes.map(s =>
+            `<button class="size-chip" data-label="${s.label}" data-price="${s.price}">${s.label}</button>`
+          ).join('')}
+        </div>
+      </div>
+    `
+    if (cartBtn) cartBtn.disabled = true   // must pick a size first
+
+    this._sizePanelEl.querySelectorAll('.size-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._sizePanelEl.querySelectorAll('.size-chip').forEach(b => b.classList.remove('selected'))
+        btn.classList.add('selected')
+        if (cartBtn) cartBtn.disabled = false
+        document.dispatchEvent(new CustomEvent('size-select', {
+          detail: { label: btn.dataset.label, price: Number(btn.dataset.price) }
+        }))
+      })
+    })
   }
 
   // Trigger glitch-boot on both info panel inners with a stagger,

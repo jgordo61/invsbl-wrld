@@ -988,6 +988,56 @@ html, body {
   background:   rgba(10, 10, 10, 0.08);
 }
 
+.ipanel-cart-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.ipanel-cart-btn:disabled:hover {
+  border-color: rgba(10, 10, 10, 0.50);
+  color:        rgba(10, 10, 10, 0.72);
+  background:   none;
+}
+
+/* Gauge/size picker */
+.info-size-panel { /* height grows with content */ }
+
+.ipanel-size-header {
+  font-size: 12px;
+  letter-spacing: 0.45em;
+  color: rgba(10, 10, 10, 0.40);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.ipanel-size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.size-chip {
+  background: none;
+  border: 0.5px solid rgba(10, 10, 10, 0.35);
+  color: rgba(10, 10, 10, 0.65);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.size-chip:hover {
+  border-color: rgba(10, 10, 10, 0.70);
+  color:        rgba(10, 10, 10, 0.95);
+}
+
+.size-chip.selected {
+  border-color: rgba(10, 10, 10, 0.90);
+  background:   rgba(10, 10, 10, 0.85);
+  color:        #fff;
+}
+
 /* Shared inner wrapper — parallelogram clip + ice-blue tint.
    Left & right padding must exceed the 15% shear (≥69px on 459px)
    so text never touches the clipped edge at either corner. */
@@ -1369,6 +1419,42 @@ html, body {
   .mob-toc-link:active { opacity: 0.35; }
   .mob-spec-ph { color: rgba(10,10,10,0.22); letter-spacing: 0.35em; }
 
+  /* ── Gauge/size picker ────────────────────────────────────────────────────── */
+  .mob-size-header {
+    font-family: 'Courier New', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.42em;
+    color: rgba(10,10,10,0.33);
+    text-transform: uppercase;
+    margin-top: 14px;
+    margin-bottom: 8px;
+  }
+
+  .mob-size-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .mob-size-options .size-chip {
+    background: none;
+    border: 0.5px solid rgba(10,10,10,0.30);
+    color: rgba(10,10,10,0.65);
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 6px 10px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .mob-size-options .size-chip.selected {
+    border-color: rgba(10,10,10,0.90);
+    background:   rgba(10,10,10,0.85);
+    color:        #fff;
+  }
+
   /* ── Add to cart button ──────────────────────────────────────────────────── */
   .mob-cart-btn {
     width: 100%;
@@ -1386,6 +1472,7 @@ html, body {
     touch-action: manipulation;
   }
   .mob-cart-btn:active { background: rgba(10,10,10,0.05); }
+  .mob-cart-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* ── Continue cue ────────────────────────────────────────────────────────── */
   .mob-continue-cue {

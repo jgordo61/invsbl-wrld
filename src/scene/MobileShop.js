@@ -231,15 +231,41 @@ export class MobileShop {
 
     const cartHTML = item.toc ? '' : `<button class="mob-cart-btn">ADD TO CART</button>`
 
+    const sizeHTML = item.sizes?.length ? `
+      <div class="mob-size-header">SELECT GAUGE</div>
+      <div class="mob-size-options">
+        ${item.sizes.map(s =>
+          `<button class="size-chip" data-label="${s.label}" data-price="${s.price}">${s.label}</button>`
+        ).join('')}
+      </div>
+    ` : ''
+
     this._specsEl.innerHTML = `
       <div class="mob-specs-header">${header}</div>
       <div class="mob-specs-list">${specsHTML}</div>
+      ${sizeHTML}
       ${cartHTML}
     `
 
+    // Gauge/size picker — mirrors HUD.js: must pick a size before the cart
+    // button unlocks, and every render starts deselected.
+    const cartBtn = this._specsEl.querySelector('.mob-cart-btn')
+    if (item.sizes?.length && cartBtn) {
+      cartBtn.disabled = true
+      this._specsEl.querySelectorAll('.size-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this._specsEl.querySelectorAll('.size-chip').forEach(b => b.classList.remove('selected'))
+          btn.classList.add('selected')
+          cartBtn.disabled = false
+          document.dispatchEvent(new CustomEvent('size-select', {
+            detail: { label: btn.dataset.label, price: Number(btn.dataset.price) }
+          }))
+        })
+      })
+    }
+
     // Wire cart button
-    this._specsEl.querySelector('.mob-cart-btn')
-      ?.addEventListener('click', () => document.getElementById('addToCart')?.click())
+    cartBtn?.addEventListener('click', () => document.getElementById('addToCart')?.click())
 
     // Wire TOC links
     if (item.toc) {
