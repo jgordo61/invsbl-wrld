@@ -92,6 +92,7 @@ const CATALOG = [
     name: 'CLOUD BENGAL', collection: 'INVSBL', price: 50,
     modelUrl: '/models/Low Poly GLB/Cloud Bengal Low Poly.glb',
     images: [],
+    hidden: true,   // not deleted — just excluded from the live shop/TOC for now
     specs: [
       'MATERIAL — WHITE OSBY',
       'FINISH — TUMBLE POLISH',
@@ -156,17 +157,21 @@ const CATALOG = [
     specs: [
       '01 — CRESCENT GRADIENT',
       '02 — HALF CRESCENT GRADIENT',
-      '03 — CLOUD BENGAL',
-      '04 — EPSILON',
-      '05 — EPSILON RING',
-      '06 — HYPERCUBE',
-      '07 — GINSENG RITUAL',
+      '03 — EPSILON',
+      '04 — EPSILON RING',
+      '05 — HYPERCUBE',
+      '06 — GINSENG RITUAL',
     ]
   }
 ]
 
 // Populate real photos from src/assets/photos/<piece-name>/ (skips TOC entries)
 CATALOG.forEach(item => { if (!item.toc) item.images = photosFor(item.name) })
+
+// Items with hidden:true stay in CATALOG (data intact, easy to bring back)
+// but are excluded from the live shop — this is what actually drives
+// navigation/rendering everywhere below.
+const VISIBLE_CATALOG = CATALOG.filter(item => !item.hidden)
 
 // ════════════════════════════════════════════════════════════════════════════
 //  DOM
@@ -247,9 +252,9 @@ async function enterShop() {
   scrollCue.classList.remove('visible')
 
   // Build nav dots
-  totalItems.textContent = String(CATALOG.length).padStart(2, '0')
+  totalItems.textContent = String(VISIBLE_CATALOG.length).padStart(2, '0')
   itemDots.innerHTML = ''
-  CATALOG.forEach((_, i) => {
+  VISIBLE_CATALOG.forEach((_, i) => {
     const dot = document.createElement('button')
     dot.className = 'dot'
     dot.setAttribute('aria-label', `Item ${i + 1}`)
@@ -287,7 +292,7 @@ async function enterShop() {
       _renderRafId = requestAnimationFrame(tick)
     }
     const interactionTarget = document.querySelector('.shop-canvas-container')
-    shop = new ShopScene(ren.renderer, ren.scene, ren.camera, CATALOG, interactionTarget)
+    shop = new ShopScene(ren.renderer, ren.scene, ren.camera, VISIBLE_CATALOG, interactionTarget)
     shop.loadAll((loaded) => {
       currentIdx.textContent = String(loaded).padStart(2, '0')
     }).then(() => {
