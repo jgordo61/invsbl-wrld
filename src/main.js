@@ -113,6 +113,16 @@ const CATALOG = [
     ]
   },
   {
+    name: 'EPSILON RING', collection: 'INVSBL', price: 270,
+    modelUrl: '/models/Low Poly GLB/Epsilon Ring Low Poly.glb',
+    images: [],
+    specs: [
+      'MATERIAL — 925 STERLING SILVER',
+      'FINISH — HIGH POLISH',
+      'FORM — RING',
+    ]
+  },
+  {
     name: 'HYPERCUBE', collection: 'INVSBL', price: 285,
     modelUrl: '/models/Low Poly GLB/Hypercube LowPoly.glb',
     images: [],
@@ -148,8 +158,9 @@ const CATALOG = [
       '02 — HALF CRESCENT GRADIENT',
       '03 — CLOUD BENGAL',
       '04 — EPSILON',
-      '05 — HYPERCUBE',
-      '06 — GINSENG RITUAL',
+      '05 — EPSILON RING',
+      '06 — HYPERCUBE',
+      '07 — GINSENG RITUAL',
     ]
   }
 ]
