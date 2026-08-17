@@ -67,9 +67,11 @@ export class MobileShop {
     this._renderGallery(item)
     this._renderInfo(item)
 
-    // TOC item has no 3D model and no gallery
+    // TOC item has no 3D model and no gallery — info drawer expands to fill
+    // the full screen instead of sitting in its usual bottom strip.
     this._galEl.style.display    = item.toc ? 'none' : 'flex'
     this._spacerEl.style.display = item.toc ? 'none' : 'block'
+    this._infoEl.classList.toggle('toc-mode', !!item.toc)
     this._cueEl.style.display    = 'flex'   // always show — last item just does nothing
   }
 

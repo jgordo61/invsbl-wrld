@@ -1372,8 +1372,8 @@ html, body {
   }
   #mob-info::-webkit-scrollbar { display: none; }
 
-  /* TOC item: no gallery/spacer, give the drawer more height */
-  #mob-info.toc-mode { height: 65vh; }
+  /* TOC item: no gallery/spacer — drawer fills the full screen like a page */
+  #mob-info.toc-mode { top: 0; height: 100dvh; }
 
   /* ── Name block ──────────────────────────────────────────────────────────── */
   .mob-collection {
