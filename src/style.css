@@ -347,6 +347,25 @@ html, body {
 .cart-toggle:hover,
 .cart-toggle.has-items { color: var(--black); }
 
+/* ── Sound toggle (in nav) ───────────────────────────────────────────────── */
+.sound-toggle {
+  background: transparent;
+  border: none;
+  color: rgba(0,0,0,0.35);
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sound-toggle:hover { color: var(--black); }
+.sound-toggle.muted  { color: rgba(0,0,0,0.20); }
+
+.sound-icon-mute { display: none; }
+.sound-toggle.muted .sound-icon-wave { display: none; }
+.sound-toggle.muted .sound-icon-mute { display: block; }
+
 /* ── Add to cart button ──────────────────────────────────────────────────── */
 .add-to-cart-btn {
   position: fixed;

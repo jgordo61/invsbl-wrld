@@ -5,6 +5,7 @@
 // Click-and-drag also scrolls the gallery.
 // ──────────────────────────────────────────────────────────────────────────────
 import { gsap } from 'gsap'
+import { sounds } from '../utils/sounds.js'
 
 // ── Tunable constants ─────────────────────────────────────────────────────────
 const PANEL_W   = 395     // px — panel width  (416 × 0.95)
@@ -16,6 +17,7 @@ const LERP      = 0.10    // scroll-lerp factor per frame
 const MIN_PAN   = 9       // pad images array to this count
 const SCROLL_S  = 0.005   // wheel delta → offset units
 const DRAG_S    = 0.012   // drag px → offset units
+const TICK_T    = 0.5     // curve-t "tick point" — panels play gallery-tick as they cross it
 
 // ── Quadratic-bezier control points (viewport fractions) ──────────────────────
 const P0 = [0.23, 0.08]   // top anchor   (+0.03 toward centre)
@@ -42,6 +44,7 @@ export class HUD {
 
     // Idle-glitch scheduler — one setTimeout ID per live panel inner element
     this._glitchTimers = []
+    this._glitchCount  = {}  // sound trigger name -> count; sound fires every other per trigger
 
     // Hover tracking — scroll only captured when pointer is over a panel
     this._hovering     = false
@@ -52,11 +55,12 @@ export class HUD {
     this._dragStartY   = 0
     this._dragStartOff = 0
 
-    this._onWheel    = this._onWheel.bind(this)
-    this._onDragDown = this._onDragDown.bind(this)
-    this._onDragMove = this._onDragMove.bind(this)
-    this._onDragUp   = this._onDragUp.bind(this)
-    this._onResize   = () => this._layout()
+    this._onWheel     = this._onWheel.bind(this)
+    this._onDragDown  = this._onDragDown.bind(this)
+    this._onDragMove  = this._onDragMove.bind(this)
+    this._onDragUp    = this._onDragUp.bind(this)
+    this._onMouseMove = this._onMouseMove.bind(this)
+    this._onResize    = () => this._layout()
 
     this._buildDOM()
   }
@@ -74,6 +78,12 @@ export class HUD {
     this._bootInfoPanels(0.3)
     this._startRAF()
     window.addEventListener('resize', this._onResize, { passive: true })
+    window.addEventListener('mousemove', this._onMouseMove, { passive: true })
+    // capture:true so this runs before ShopScene's own wheel listener on
+    // #shop (bubble phase) — necessary because .gallery-wrap is
+    // pointer-events:none, so wheel events over its empty gaps never target
+    // it at all and would otherwise reach #shop's listener untouched.
+    window.addEventListener('wheel', this._onWheel, { passive: false, capture: true })
   }
 
   // Called every time the shop item changes — rebuilds panels for new item
@@ -110,6 +120,8 @@ export class HUD {
     this._hovering = false
     gsap.killTweensOf(this._infoInnerEl)
     window.removeEventListener('resize', this._onResize)
+    window.removeEventListener('mousemove', this._onMouseMove)
+    window.removeEventListener('wheel', this._onWheel, { capture: true })
   }
 
   dispose() {
@@ -125,11 +137,10 @@ export class HUD {
     this._el.id = 'hud-overlay'
 
     // Gallery-wrap: transparent strip that owns pointer events for the gallery.
-    // Wheel events are only intercepted when _hovering is true (pointer over a panel).
     // Drag events are always active here so you can drag from any point on a panel.
+    // Wheel is NOT listened for here — see _onMouseMove/_onWheel below for why.
     this._wrap = document.createElement('div')
     this._wrap.className = 'gallery-wrap'
-    this._wrap.addEventListener('wheel',         this._onWheel,    { passive: false })
     this._wrap.addEventListener('pointerdown',   this._onDragDown)
     this._wrap.addEventListener('pointermove',   this._onDragMove)
     this._wrap.addEventListener('pointerup',     this._onDragUp)
@@ -234,13 +245,13 @@ export class HUD {
         inner.addEventListener('animationend', () => {
           inner.classList.remove('panel-booting')
           inner.style.animationDelay = ''
-          this._scheduleGlitch(inner)
+          this._scheduleGlitch(inner, undefined, undefined, 'glitch-gallery')
         }, { once: true })
       }
 
-      // Hover tracking — gates wheel-scroll to gallery only
-      el.addEventListener('mouseenter', () => { this._hovering = true  })
-      el.addEventListener('mouseleave', () => { this._hovering = false })
+      // Hover sound only — wheel-scroll gating now comes from _onMouseMove's
+      // broader gallery-region check, not literal per-panel hover.
+      el.addEventListener('mouseenter', () => sounds.play('hover'))
 
       // Click opens lightbox only when the pointer wasn't dragged
       el.addEventListener('click', () => {
@@ -249,7 +260,7 @@ export class HUD {
       })
 
       this._wrap.appendChild(el)
-      this._panels.push({ el, url })
+      this._panels.push({ el, url, prevT: null })
     })
 
     this._layout()
@@ -293,6 +304,8 @@ export class HUD {
           const idx = parseInt(el.dataset.goto, 10)
           this._el.dispatchEvent(new CustomEvent('toc-goto', { bubbles: true, detail: { index: idx } }))
         })
+        // Same hover cue as the gallery thumbnails
+        el.addEventListener('mouseenter', () => sounds.play('hover'))
       })
     }
 
@@ -344,7 +357,7 @@ export class HUD {
   // Trigger glitch-boot on both info panel inners with a stagger,
   // then start idle random-glitch schedule for each.
   // Info panels glitch 40% more often than photo panels (intervals ×0.6):
-  //   photo panels: 1500–8500 ms   info panels: 900–5100 ms
+  //   photo panels: 2000–11300 ms   info panels: 1200–6800 ms
   _bootInfoPanels(baseDelay = 0) {
     const boot = (el, delay) => {
       if (!el) return
@@ -353,7 +366,7 @@ export class HUD {
       el.addEventListener('animationend', () => {
         el.classList.remove('panel-booting')
         el.style.animationDelay = ''
-        this._scheduleGlitch(el, 900, 5100)   // 40% more frequent than photo panels
+        this._scheduleGlitch(el, 1200, 6800, 'glitch-text')   // 40% more frequent than photo panels
       }, { once: true })
     }
     boot(this._namePanelEl.querySelector('.ipanel-inner'),           baseDelay)
@@ -364,9 +377,12 @@ export class HUD {
   // ── Idle glitch scheduler ────────────────────────────────────────────────────
 
   // Schedules a single random glitch on `el`, then re-schedules itself.
-  // minMs / maxMs control the wait range between glitches.
+  // minMs / maxMs control the wait range between glitches. `soundTrigger`
+  // selects which sound folder to pull from (e.g. 'glitch-gallery' vs
+  // 'glitch-text') — each trigger name gets its own independent "every
+  // other glitch" counter, so the two categories aren't in lockstep.
   // Only runs while `this._visible` is true; call `_clearGlitchTimers()` to stop.
-  _scheduleGlitch(el, minMs = 1500, maxMs = 8500) {
+  _scheduleGlitch(el, minMs = 2000, maxMs = 11300, soundTrigger = 'glitch-gallery') {
     const delay = minMs + Math.random() * (maxMs - minMs)
     const id = setTimeout(() => {
       // Drop this ID from the live list
@@ -376,14 +392,16 @@ export class HUD {
       if (!this._visible) return
       // Skip if the element is mid-boot or already glitching
       if (el.classList.contains('panel-booting') || el.classList.contains('panel-glitch')) {
-        this._scheduleGlitch(el, minMs, maxMs)
+        this._scheduleGlitch(el, minMs, maxMs, soundTrigger)
         return
       }
 
       el.classList.add('panel-glitch')
+      this._glitchCount[soundTrigger] = (this._glitchCount[soundTrigger] ?? 0) + 1
+      if (this._glitchCount[soundTrigger] % 2 === 0) sounds.play(soundTrigger)
       el.addEventListener('animationend', () => {
         el.classList.remove('panel-glitch')
-        if (this._visible) this._scheduleGlitch(el, minMs, maxMs)
+        if (this._visible) this._scheduleGlitch(el, minMs, maxMs, soundTrigger)
       }, { once: true })
     }, delay)
 
@@ -434,7 +452,8 @@ export class HUD {
     const panelH = Math.round(PANEL_H * scale)
     const tStep  = this._tStep()
 
-    this._panels.forEach(({ el }, i) => {
+    this._panels.forEach((panel, i) => {
+      const { el } = panel
       const t = T_START + (i - this._scrollOff) * tStep
 
       const offscreen = t < -0.06 || t > 1.06
@@ -455,6 +474,15 @@ export class HUD {
       el.style.top            = (y - panelH / 2) + 'px'
       el.style.transform      = ''
       el.style.zIndex         = Math.round(alpha * 5)
+
+      // Tick sound — fires once each time this panel's position crosses the
+      // arc's midpoint (t = TICK_T), in either scroll direction. prevT is
+      // null right after a fresh _setItem(), so the first layout call after
+      // an item change only records position without ticking.
+      if (panel.prevT !== null && (panel.prevT - TICK_T) * (t - TICK_T) < 0) {
+        sounds.play('gallery-tick')
+      }
+      panel.prevT = t
     })
   }
 
@@ -482,8 +510,23 @@ export class HUD {
     return Math.max(0, this._panels.length - Math.floor(visible) - 1)
   }
 
-  // Wheel — only hijacks the event when the pointer is over a panel.
-  // Otherwise the event propagates naturally to ShopScene's item navigator.
+  // Tracks whether the cursor is anywhere within the gallery-wrap's
+  // rectangular region — not just literally over a rendered panel. Needed
+  // because .gallery-wrap is pointer-events:none (so clicks on the gaps
+  // between panels pass through to the 3D canvas), which means wheel events
+  // over those same gaps would otherwise never hit .gallery-wrap's own wheel
+  // listener at all and would fall straight through to ShopScene's
+  // item-navigation listener on #shop. Driven from window so it isn't
+  // subject to that same pointer-events hit-testing.
+  _onMouseMove(e) {
+    const r = this._wrap.getBoundingClientRect()
+    this._hovering = e.clientX >= r.left && e.clientX <= r.right
+                   && e.clientY >= r.top  && e.clientY <= r.bottom
+  }
+
+  // Wheel — only hijacks the event when the cursor is within the gallery
+  // region (see _onMouseMove). Otherwise the event propagates naturally to
+  // ShopScene's item navigator.
   _onWheel(e) {
     if (!this._hovering) return
     e.stopPropagation()
@@ -548,6 +591,7 @@ export class HUD {
   }
 
   _openLightbox(index) {
+    sounds.play('lightbox-open')
     this._lbIndex = index
     this._renderLightboxImage()
 
@@ -565,6 +609,7 @@ export class HUD {
   _navLightbox(delta) {
     const n = this._panels.length
     if (!n) return
+    sounds.play('click')
     this._lbIndex = (this._lbIndex + delta + n) % n
 
     const img = this._lbEl.querySelector('.lb-img')
@@ -581,6 +626,7 @@ export class HUD {
     if (this._lbEl.style.display === 'none') return
     if (immediate) { this._lbEl.style.display = 'none'; return }
 
+    sounds.play('lightbox-close')
     const frame = this._lbEl.querySelector('.lb-frame')
     gsap.to(frame,
       { opacity: 0, scale: 0.9, duration: 0.2, ease: 'power2.in' })

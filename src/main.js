@@ -5,6 +5,7 @@ import { Renderer }        from './scene/Renderer.js'
 import { ShopScene }       from './scene/ShopScene.js'
 import { HUD }             from './scene/HUD.js'
 import { MobileShop }      from './scene/MobileShop.js'
+import { sounds }          from './utils/sounds.js'
 import './style.css'
 
 // True only when the device is a phone in portrait orientation.
@@ -188,6 +189,22 @@ const itemName   = document.getElementById('itemName')
 const itemPrice  = document.getElementById('itemPrice')
 const itemColl   = document.getElementById('itemCollection')
 
+// Sound toggle
+const soundToggleBtn = document.getElementById('soundToggle')
+function _updateSoundToggleUI() {
+  soundToggleBtn.classList.toggle('muted', sounds.isMuted())
+}
+_updateSoundToggleUI()
+soundToggleBtn.addEventListener('click', async () => {
+  // Await unlock() before toggling — otherwise, if the AudioContext hasn't
+  // finished initializing yet, the mute flag still flips correctly but the
+  // actual ambient start/stop silently no-ops (nothing re-checks it later),
+  // making the toggle look like it "didn't work" that time.
+  await sounds.unlock()   // user gesture — also fine as the very first unlock if landing hasn't happened yet
+  sounds.toggleMute()
+  _updateSoundToggleUI()
+})
+
 // Cart DOM
 const addToCartBtn  = document.getElementById('addToCart')
 const cartToggleBtn = document.getElementById('cartToggle')
@@ -218,6 +235,7 @@ document.addEventListener('toc-goto', e => {
 // is clicked. Reset whenever the shop item changes (see 'change' listener below).
 let selectedSize = null   // { label, price } | null
 document.addEventListener('size-select', e => {
+  sounds.play('size-select')
   selectedSize = e.detail
 })
 
@@ -225,6 +243,11 @@ document.addEventListener('size-select', e => {
 const landingGL = document.getElementById('landing-gl')
 const landingScene = new LandingScene(landingGL)
 landingScene.load().then(() => {
+  // On this very first load there's been no user gesture yet, so the browser
+  // will silently block this — sounds.play() just no-ops until unlock() has
+  // run once (see enterShop). It plays normally on every later return to
+  // landing via enterLetters() below, since audio is already unlocked by then.
+  sounds.play('title-reveal')
   landingScene.revealAll(() => {
     scrollCue.style.opacity = ''   // remove inline override so CSS class can work
     requestAnimationFrame(() => scrollCue.classList.add('visible'))
@@ -249,6 +272,8 @@ async function enterShop() {
   isTransitioning = true
   page = 'shop'
 
+  sounds.unlock()   // always called from within a real user gesture — safe to unlock audio here
+  sounds.play('enter')
   scrollCue.classList.remove('visible')
 
   // Build nav dots
@@ -270,7 +295,11 @@ async function enterShop() {
   let _modelsReady    = false
   let _shopAnimDone   = false
   const _maybeReveal  = () => {
-    if (_modelsReady && _shopAnimDone) shop?.revealCurrent()
+    if (_modelsReady && _shopAnimDone) {
+      shop?.revealCurrent()
+      sounds.play('nav')   // same cue as item-to-item nav, for the first item too
+      sounds.startAmbient()   // starts exactly when the shop is actually visible, not mid-transition
+    }
   }
 
   try {
@@ -300,6 +329,7 @@ async function enterShop() {
       updateHUD()
       shop.addEventListener('exit', () => exitShop())
       shop.addEventListener('change', () => {
+        sounds.play('nav')
         selectedSize = null   // require re-picking a size on every new item
         updateHUD()
         // Both guards internally — only the active one actually runs
@@ -379,6 +409,8 @@ function exitShop() {
   isTransitioning = true
   page = 'landing'
 
+  sounds.play('exit')
+  sounds.stopAmbient()
   isMobile() ? mobileShop.hide() : hud.hide()
 
   // Prepare landing above viewport, hidden letters
@@ -408,6 +440,7 @@ function exitShop() {
     duration: 0.9, ease: 'power3.inOut',
     onComplete: () => {
       isTransitioning = false
+      sounds.play('title-reveal')
       landingScene.enterLetters(() => {
         scrollCue.style.opacity = ''
         requestAnimationFrame(() => scrollCue.classList.add('visible'))
@@ -610,6 +643,7 @@ function renderCart() {
   // Delegate qty / remove clicks
   cartBodyEl.querySelectorAll('.qty-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      sounds.play('cart-qty')
       _cartUpdateQty(btn.dataset.key, btn.dataset.action === 'inc' ? 1 : -1)
       renderCart()
       updateCartBadge()
@@ -617,6 +651,7 @@ function renderCart() {
   })
   cartBodyEl.querySelectorAll('.cart-item-remove').forEach(btn => {
     btn.addEventListener('click', () => {
+      sounds.play('click')
       _cartRemove(btn.dataset.key)
       renderCart()
       updateCartBadge()
@@ -635,6 +670,7 @@ function updateCartBadge() {
 function openCart() {
   if (cartOpen) return
   cartOpen = true
+  sounds.play('cart-open')
   cartPanelEl.style.display = 'flex'
   cartPanelEl.setAttribute('aria-hidden', 'false')
   gsap.fromTo(cartPanelEl,
@@ -646,6 +682,7 @@ function openCart() {
 function closeCart() {
   if (!cartOpen) return
   cartOpen = false
+  sounds.play('cart-close')
   cartPanelEl.setAttribute('aria-hidden', 'true')
   gsap.to(cartPanelEl, {
     x: '100%', duration: 0.45, ease: 'power3.in',
@@ -658,6 +695,7 @@ addToCartBtn.addEventListener('click', () => {
   if (!shop) return
   const item = shop.currentItem
   if (item.sizes && !selectedSize) return   // UI should already block this — safety net
+  sounds.play('add-to-cart')
   _cartAdd(item, item.sizes ? selectedSize : null)
   renderCart()
   updateCartBadge()
@@ -670,6 +708,7 @@ cartCloseBtn.addEventListener('click', closeCart)
 cartCheckout.addEventListener('click', async () => {
   if (cartItems.length === 0 || cartCheckout.disabled) return
 
+  sounds.play('checkout')
   const originalText = cartCheckout.textContent
   cartCheckout.disabled    = true
   cartCheckout.textContent = 'REDIRECTING…'

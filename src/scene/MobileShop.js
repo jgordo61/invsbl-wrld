@@ -1,4 +1,5 @@
 import { gsap } from 'gsap'
+import { sounds } from '../utils/sounds.js'
 
 /**
  * MobileShop
@@ -20,6 +21,7 @@ export class MobileShop {
 
     this._el       = null   // #mob-shop  — scroll container
     this._galEl    = null   // #mob-gallery
+    this._tickThumbs = []   // gallery-tick tracking, see _checkGalleryTicks()
     this._spacerEl = null   // #mob-3d-spacer
     this._infoEl   = null   // #mob-info
     this._nameEl   = null
@@ -113,6 +115,10 @@ export class MobileShop {
     this._el.appendChild(this._infoEl)
     shopEl.appendChild(this._el)
 
+    // ── Gallery scroll: tick sound as each thumb crosses the strip's
+    // horizontal center — mirrors HUD.js's arc-midpoint tick on desktop.
+    this._galEl.addEventListener('scroll', () => this._checkGalleryTicks(), { passive: true })
+
     // ── Scroll: detect when the info drawer reaches its bottom ───────────────
     this._infoEl.addEventListener('scroll', () => {
       const { scrollTop, scrollHeight, clientHeight } = this._infoEl
@@ -162,6 +168,24 @@ export class MobileShop {
 
       this._galEl.appendChild(thumb)
     })
+
+    // Fresh tracking list for the tick sound — prevSide starts null so the
+    // very first scroll check after a render only records position, same
+    // spirit as HUD.js's prevT reset on _setItem().
+    this._tickThumbs = [...this._galEl.querySelectorAll('.mob-thumb')].map(el => ({ el, prevSide: null }))
+  }
+
+  // Fires gallery-tick once each time a thumb's center crosses the strip's
+  // horizontal midpoint, in either scroll direction.
+  _checkGalleryTicks() {
+    if (!this._tickThumbs?.length) return
+    const mid = window.innerWidth / 2
+    for (const t of this._tickThumbs) {
+      const rect = t.el.getBoundingClientRect()
+      const side = (rect.left + rect.width / 2) < mid ? -1 : 1
+      if (t.prevSide !== null && side !== t.prevSide) sounds.play('gallery-tick')
+      t.prevSide = side
+    }
   }
 
   // ── Lightbox (shared with HUD — reuses #hud-lightbox) ───────────────────────
@@ -173,6 +197,7 @@ export class MobileShop {
   _openLightbox(url) {
     const lb    = this._lbEl()
     if (!lb) return
+    sounds.play('lightbox-open')
     const frame = lb.querySelector('.lb-frame')
     const img   = lb.querySelector('.lb-img')
     const noSig = lb.querySelector('.lb-nosignal')
@@ -198,6 +223,7 @@ export class MobileShop {
   _closeLightbox() {
     const lb = this._lbEl()
     if (!lb || lb.style.display === 'none') return
+    sounds.play('lightbox-close')
     const frame = lb.querySelector('.lb-frame')
     gsap.to(frame, { opacity: 0, scale: 0.9, duration: 0.2, ease: 'power2.in' })
     gsap.to(lb.querySelector('.lb-backdrop'), {
