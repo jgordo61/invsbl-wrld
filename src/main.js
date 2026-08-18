@@ -358,6 +358,7 @@ async function enterShop() {
   // Letters start exiting immediately
   landingScene.exitLetters(() => {
     landingGL.style.display = 'none'
+    landingScene.pauseLoop()
   })
 
   // Landing fades out — shop entrance is chained inside onComplete
@@ -414,6 +415,7 @@ function exitShop() {
   isMobile() ? mobileShop.hide() : hud.hide()
 
   // Prepare landing above viewport, hidden letters
+  landingScene.resumeLoop()
   landingGL.style.display = 'block'
   landingScene.resetLetters()
   landingEl.style.display = 'flex'

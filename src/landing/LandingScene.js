@@ -478,9 +478,24 @@ export class LandingScene {
   }
 
   // ── Render loop ───────────────────────────────────────────────────────────
+  // Pause while the shop covers this canvas — otherwise this renderer (its
+  // own WebGL context, shadow-mapped lights, glitch RT pass) keeps rendering
+  // every frame indefinitely in the background, fighting the shop's own
+  // render loop for the GPU even though nothing here is visible.
+  pauseLoop() {
+    this._paused = true
+    cancelAnimationFrame(this._animFrame)
+  }
+
+  resumeLoop() {
+    if (this._disposed || !this._paused) return
+    this._paused = false
+    this._startLoop()
+  }
+
   _startLoop() {
     const loop = (ts = 0) => {
-      if (this._disposed) return
+      if (this._disposed || this._paused) return
       this._animFrame = requestAnimationFrame(loop)
 
       const t = ts * 0.001   // seconds
