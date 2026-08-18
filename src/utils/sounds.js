@@ -157,9 +157,14 @@ class SoundManager {
 
   // Loops src/assets/sounds/ambient/ (one random variation, picked once)
   // while the shop is open. Call stopAmbient() on exit back to landing.
-  startAmbient() {
+  // Awaits the in-flight decode (started by unlock()) before checking for
+  // buffers — on a first/cold shop entry, decoding the ambient file can
+  // still be running when this fires, and _startAmbient() would otherwise
+  // silently find no buffers yet and never retry.
+  async startAmbient() {
     this._wantAmbient = true
-    if (!this._muted) this._startAmbient()
+    if (this._decodePromise) await this._decodePromise
+    if (this._wantAmbient && !this._muted) this._startAmbient()
   }
 
   stopAmbient() {
