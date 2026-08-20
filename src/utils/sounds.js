@@ -136,6 +136,13 @@ class SoundManager {
   // startAmbient() had — see its comment).
   async play(trigger, delayMs = 0) {
     if (this._muted || !this._ctx) return
+    // Some mobile browsers (notably iOS Safari) can leave the context stuck
+    // "suspended" even after an earlier resume() call from unlock() — every
+    // play() happens from within some fresh user interaction too, so this
+    // is another legitimate chance to get it unstuck.
+    if (this._ctx.state === 'suspended') {
+      try { await this._ctx.resume() } catch (_) {}
+    }
     if (this._decodePromise) await this._decodePromise
     if (this._muted) return   // re-check — mute may have been toggled while awaiting
     const buffers = this._buffers[trigger]
@@ -185,6 +192,9 @@ class SoundManager {
   // silently find no buffers yet and never retry.
   async startAmbient() {
     this._wantAmbient = true
+    if (this._ctx?.state === 'suspended') {
+      try { await this._ctx.resume() } catch (_) {}
+    }
     if (this._decodePromise) await this._decodePromise
     if (this._wantAmbient && !this._muted) this._startAmbient()
   }

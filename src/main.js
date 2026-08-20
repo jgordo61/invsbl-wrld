@@ -239,6 +239,22 @@ document.addEventListener('size-select', e => {
   selectedSize = e.detail
 })
 
+// Unlock audio on the very first interaction of any kind, as early as
+// physically possible — decoupled from enterShop() specifically. Mobile
+// Safari's audio-unlock is strict about running inside a genuinely fresh
+// gesture, so this fires on touchstart (which lands before touchend/click)
+// rather than waiting on whichever handler happens to call enterShop().
+// unlock() is idempotent, so this is purely an earlier extra attempt.
+function _unlockAudioOnce() {
+  sounds.unlock()
+  window.removeEventListener('touchstart', _unlockAudioOnce)
+  window.removeEventListener('mousedown',  _unlockAudioOnce)
+  window.removeEventListener('keydown',    _unlockAudioOnce)
+}
+window.addEventListener('touchstart', _unlockAudioOnce, { passive: true })
+window.addEventListener('mousedown',  _unlockAudioOnce, { passive: true })
+window.addEventListener('keydown',    _unlockAudioOnce, { passive: true })
+
 // ── LandingScene — 3D letter renderer ────────────────────────────────────────
 const landingGL = document.getElementById('landing-gl')
 const landingScene = new LandingScene(landingGL)
