@@ -15,6 +15,7 @@ export class MobileShop {
   constructor() {
     this._visible  = false
     this._atBottom = false
+    this._atTop    = true
     this._touchY0  = 0
     this._onNext   = null
     this._onPrev   = null
@@ -61,6 +62,7 @@ export class MobileShop {
 
   _update(item, idx) {
     this._atBottom = false
+    this._atTop    = true
     this._el.scrollTo({ top: 0, behavior: 'instant' })
     this._infoEl.scrollTo({ top: 0, behavior: 'instant' })
 
@@ -121,13 +123,15 @@ export class MobileShop {
     // horizontal center — mirrors HUD.js's arc-midpoint tick on desktop.
     this._galEl.addEventListener('scroll', () => this._checkGalleryTicks(), { passive: true })
 
-    // ── Scroll: detect when the info drawer reaches its bottom ───────────────
+    // ── Scroll: detect when the info drawer reaches its top/bottom ───────────
     this._infoEl.addEventListener('scroll', () => {
       const { scrollTop, scrollHeight, clientHeight } = this._infoEl
       this._atBottom = scrollHeight - scrollTop - clientHeight < 12
+      this._atTop    = scrollTop < 12
     }, { passive: true })
 
-    // ── Touch on info drawer: swipe up at bottom → next item ─────────────────
+    // ── Touch on info drawer: swipe up at bottom → next item,
+    // swipe down at top → previous item (or exit, on the first item) ────────
     this._infoEl.addEventListener('touchstart', e => {
       this._touchY0 = e.touches[0].clientY
     }, { passive: true })
@@ -135,6 +139,7 @@ export class MobileShop {
     this._infoEl.addEventListener('touchend', e => {
       const dy = this._touchY0 - e.changedTouches[0].clientY   // +ve = swipe up
       if (this._atBottom && dy > 25) this._onNext?.()
+      else if (this._atTop && dy < -25) this._onPrev?.()
     }, { passive: true })
   }
 

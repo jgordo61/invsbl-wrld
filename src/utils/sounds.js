@@ -114,8 +114,15 @@ class SoundManager {
   // rather than the instant the arrow key/dot was hit. Scheduled via the
   // AudioContext clock (not setTimeout) for sample-accurate timing that
   // isn't subject to JS event-loop jitter.
-  play(trigger, delayMs = 0) {
+  // Awaits the in-flight decode (started by unlock()) before checking for
+  // buffers — on a true first visit, play('enter') fires on the very next
+  // line after unlock(), with zero time for decoding to finish, so it would
+  // otherwise silently find no buffers yet and never play (same race as
+  // startAmbient() had — see its comment).
+  async play(trigger, delayMs = 0) {
     if (this._muted || !this._ctx) return
+    if (this._decodePromise) await this._decodePromise
+    if (this._muted) return   // re-check — mute may have been toggled while awaiting
     const buffers = this._buffers[trigger]
     if (!buffers?.length) return
 

@@ -489,8 +489,12 @@ let _ty0 = 0, _tx0 = 0, _touchOnGallery = false
 window.addEventListener('touchstart', (e) => {
   _ty0 = e.touches[0].clientY
   _tx0 = e.touches[0].clientX
-  // Track if touch starts on a gallery panel so we don't also trigger item nav
-  _touchOnGallery = !!e.target.closest?.('.hud-gpanel')
+  // Track if touch starts within the gallery region so we don't also trigger
+  // item nav — a literal .hud-gpanel hit isn't enough since .gallery-wrap is
+  // pointer-events:none, so a touch starting in a gap between panels (e.g.
+  // on a landscape phone, which uses this same desktop HUD) would otherwise
+  // never register as "on the gallery" at all.
+  _touchOnGallery = hud.isPointInGallery(_tx0, _ty0)
 }, { passive: true })
 
 window.addEventListener('touchend', (e) => {

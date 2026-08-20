@@ -519,9 +519,21 @@ export class HUD {
   // item-navigation listener on #shop. Driven from window so it isn't
   // subject to that same pointer-events hit-testing.
   _onMouseMove(e) {
+    this._hovering = this.isPointInGallery(e.clientX, e.clientY)
+  }
+
+  // Public — same region check as _onMouseMove/_hovering, for callers outside
+  // HUD (main.js's window-level touch swipe-navigation) that need to know
+  // whether a point falls within the gallery so they don't also treat a
+  // gallery-scroll gesture as an item-navigation swipe. Landscape-orientation
+  // phones use this same desktop HUD (isMobile() only covers portrait), and
+  // touches over the pointer-events:none gaps between panels need this same
+  // rect check — not just a literal .hud-gpanel hit — for the same reason
+  // wheel events did.
+  isPointInGallery(x, y) {
+    if (!this._visible) return false
     const r = this._wrap.getBoundingClientRect()
-    this._hovering = e.clientX >= r.left && e.clientX <= r.right
-                   && e.clientY >= r.top  && e.clientY <= r.bottom
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
   }
 
   // Wheel — only hijacks the event when the cursor is within the gallery
