@@ -171,7 +171,11 @@ export class MobileShop {
       thumb.appendChild(label)
 
       // Tap → open lightbox (same element HUD uses on desktop)
-      thumb.addEventListener('click', () => this._openLightbox(url))
+      // No hover state on touch — reuse the hover/ sound folder as the tap cue instead.
+      thumb.addEventListener('click', () => {
+        sounds.play('hover')
+        this._openLightbox(url)
+      })
 
       this._galEl.appendChild(thumb)
     })

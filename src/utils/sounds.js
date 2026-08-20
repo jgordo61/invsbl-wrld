@@ -80,6 +80,21 @@ class SoundManager {
       const Ctx = window.AudioContext || window.webkitAudioContext
       if (!Ctx) return   // no Web Audio support — sounds just silently no-op
       this._ctx = new Ctx()
+
+      // iOS Safari (and some other mobile browsers) can report the context
+      // as "running" after resume() yet still silently swallow the *first*
+      // buffer source it ever plays if that start() call happens too long
+      // after the original gesture — which our real first sound always did,
+      // since it has to wait on that file's decode to finish first. A
+      // one-sample silent buffer, started synchronously right here (before
+      // any decoding), fully primes the context within the gesture so every
+      // later scheduled sound plays normally once decoded.
+      try {
+        const primer = this._ctx.createBufferSource()
+        primer.buffer = this._ctx.createBuffer(1, 1, this._ctx.sampleRate)
+        primer.connect(this._ctx.destination)
+        primer.start(0)
+      } catch (_) {}
     }
     if (this._ctx.state === 'suspended') {
       try { await this._ctx.resume() } catch (_) {}
