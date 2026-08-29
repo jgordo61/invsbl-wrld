@@ -1,4 +1,3 @@
-import { gsap } from 'gsap'
 import { sounds } from '../utils/sounds.js'
 
 /**
@@ -9,10 +8,14 @@ import { sounds } from '../utils/sounds.js'
  *   2. #mob-3d-spacer (25–77.5vh)  — transparent, passes touches to 3D canvas
  *   3. #mob-info  (77.5–100vh)     — item name, specs, cart, continue cue
  *
- * Tapping a gallery thumb opens the shared #hud-lightbox (same as desktop).
+ * Tapping a gallery thumb opens the shared #hud-lightbox (same as desktop,
+ * via the HUD instance passed in here — HUD owns that DOM and its arrow-key/
+ * arrow-button navigation, so MobileShop drives it rather than duplicating it).
  */
 export class MobileShop {
-  constructor() {
+  constructor(hud) {
+    this._hud      = hud
+    this._images   = []   // current item's photo URLs, for lightbox nav
     this._visible  = false
     this._atBottom = false
     this._atTop    = true
@@ -50,7 +53,7 @@ export class MobileShop {
   hide() {
     this._visible = false
     this._el.style.display = 'none'
-    this._closeLightbox()
+    this._hud._closeLightbox(true)
   }
 
   dispose() {
@@ -149,6 +152,7 @@ export class MobileShop {
     this._galEl.innerHTML = ''
     const imgs = [...(item.images ?? [])]
     while (imgs.length < 10) imgs.push(null)
+    this._images = imgs   // kept for lightbox nav — see the click handler below
 
     imgs.forEach((url, i) => {
       const thumb = document.createElement('div')
@@ -170,11 +174,11 @@ export class MobileShop {
       label.textContent = `[ VIEW·${String(i + 1).padStart(2, '0')} ]`
       thumb.appendChild(label)
 
-      // Tap → open lightbox (same element HUD uses on desktop)
+      // Tap → open the shared lightbox (HUD owns it — see class comment).
       // No hover state on touch — reuse the hover/ sound folder as the tap cue instead.
       thumb.addEventListener('click', () => {
         sounds.play('hover')
-        this._openLightbox(url)
+        this._hud.openLightbox(i, this._images)
       })
 
       this._galEl.appendChild(thumb)
@@ -199,52 +203,6 @@ export class MobileShop {
     }
   }
 
-  // ── Lightbox (shared with HUD — reuses #hud-lightbox) ───────────────────────
-
-  _lbEl() {
-    return document.getElementById('hud-lightbox')
-  }
-
-  _openLightbox(url) {
-    const lb    = this._lbEl()
-    if (!lb) return
-    sounds.play('lightbox-open')
-    const frame = lb.querySelector('.lb-frame')
-    const img   = lb.querySelector('.lb-img')
-    const noSig = lb.querySelector('.lb-nosignal')
-
-    if (url) {
-      img.src             = url
-      img.style.display   = 'block'
-      noSig.style.display = 'none'
-    } else {
-      img.style.display   = 'none'
-      noSig.style.display = 'flex'
-    }
-
-    lb.style.display = 'flex'
-    gsap.fromTo(lb.querySelector('.lb-backdrop'),
-      { opacity: 0 },
-      { opacity: 1, duration: 0.3, ease: 'power2.out' })
-    gsap.fromTo(frame,
-      { opacity: 0, scale: 0.88, y: 18 },
-      { opacity: 1, scale: 1,    y: 0,  duration: 0.4, ease: 'power3.out' })
-  }
-
-  _closeLightbox() {
-    const lb = this._lbEl()
-    if (!lb || lb.style.display === 'none') return
-    sounds.play('lightbox-close')
-    const frame = lb.querySelector('.lb-frame')
-    gsap.to(frame, { opacity: 0, scale: 0.9, duration: 0.2, ease: 'power2.in' })
-    gsap.to(lb.querySelector('.lb-backdrop'), {
-      opacity: 0, duration: 0.28, ease: 'power2.in',
-      onComplete: () => {
-        lb.style.display = 'none'
-        gsap.set(frame, { opacity: 1, scale: 1, y: 0 })
-      }
-    })
-  }
 
   // ── Info rendering ──────────────────────────────────────────────────────────
 

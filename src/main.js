@@ -224,7 +224,7 @@ let shop            = null
 let ren             = null    // WebGL renderer, created lazily
 let _renderRafId    = null    // tracks the active render-loop RAF so we can cancel it
 const hud           = new HUD()
-const mobileShop    = new MobileShop()
+const mobileShop    = new MobileShop(hud)
 
 // TOC item — clicking a spec line fires 'toc-goto'; navigate to that item
 document.addEventListener('toc-goto', e => {

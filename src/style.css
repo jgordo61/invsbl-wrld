@@ -1229,6 +1229,36 @@ html, body {
   color: rgba(255, 255, 255, 0.45);
 }
 
+/* Positioned relative to #hud-lightbox (the full-screen overlay), not
+   .lb-frame — so they sit out at the screen margins regardless of how wide
+   the frame/image itself is, rather than hugging (or overlapping) the photo. */
+.lb-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 42px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 24px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.lb-nav:hover {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.5);
+}
+.lb-nav-prev { left: 5vw; }
+.lb-nav-next { right: 5vw; }
+
 /* ── Global ───────────────────────────────────────────────────────────────── */
 * { user-select: none; -webkit-user-select: none; }
 
@@ -1556,10 +1586,20 @@ html, body {
   }
 
   /* ── Lightbox ─────────────────────────────────────────────────────────────── */
+  /* Narrower than before (was 92vw) so the nav buttons have real margin to
+     sit in without landing on top of the photo itself. */
   .lb-frame {
-    width: 92vw;
+    width: 78vw;
     height: 60vh;
   }
+
+  .lb-nav {
+    width: 30px;
+    height: 42px;
+    font-size: 17px;
+  }
+  .lb-nav-prev { left: 3vw; }
+  .lb-nav-next { right: 3vw; }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

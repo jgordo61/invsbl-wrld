@@ -152,6 +152,8 @@ export class HUD {
     this._lbEl.id = 'hud-lightbox'
     this._lbEl.innerHTML = `
       <div class="lb-backdrop"></div>
+      <button class="lb-nav lb-nav-prev" aria-label="Previous photo">‹</button>
+      <button class="lb-nav lb-nav-next" aria-label="Next photo">›</button>
       <div class="lb-frame">
         <div    class="lb-counter"></div>
         <button class="lb-close" aria-label="Close">✕</button>
@@ -161,6 +163,8 @@ export class HUD {
     `
     this._lbEl.querySelector('.lb-backdrop').addEventListener('click', () => this._closeLightbox())
     this._lbEl.querySelector('.lb-close').addEventListener('click',    () => this._closeLightbox())
+    this._lbEl.querySelector('.lb-nav-prev').addEventListener('click', () => this._navLightbox(-1))
+    this._lbEl.querySelector('.lb-nav-next').addEventListener('click', () => this._navLightbox(1))
     window.addEventListener('keydown', e => {
       if (!this.isLightboxOpen()) return
       if (e.key === 'Escape')          this._closeLightbox()
@@ -256,7 +260,7 @@ export class HUD {
       // Click opens lightbox only when the pointer wasn't dragged
       el.addEventListener('click', () => {
         if (this._dragMoved) return
-        this._openLightbox(i)
+        this.openLightbox(i)
       })
 
       this._wrap.appendChild(el)
@@ -585,7 +589,7 @@ export class HUD {
   }
 
   _renderLightboxImage() {
-    const url   = this._panels[this._lbIndex]?.url
+    const url   = this._lbImages[this._lbIndex]
     const img   = this._lbEl.querySelector('.lb-img')
     const noSig = this._lbEl.querySelector('.lb-nosignal')
 
@@ -599,12 +603,17 @@ export class HUD {
     }
 
     const counter = this._lbEl.querySelector('.lb-counter')
-    counter.textContent = `[ VIEW·${String(this._lbIndex + 1).padStart(2, '0')} / ${String(this._panels.length).padStart(2, '0')} ]`
+    counter.textContent = `[ VIEW·${String(this._lbIndex + 1).padStart(2, '0')} / ${String(this._lbImages.length).padStart(2, '0')} ]`
   }
 
-  _openLightbox(index) {
+  // Public — opens the shared lightbox. `images` defaults to this HUD's own
+  // gallery panels (desktop caller below), but MobileShop passes its own
+  // item.images array + tapped index directly, since it drives the same
+  // shared #hud-lightbox DOM without going through HUD's panel state.
+  openLightbox(index, images = this._panels.map(p => p.url)) {
     sounds.play('lightbox-open')
-    this._lbIndex = index
+    this._lbImages = images
+    this._lbIndex  = index
     this._renderLightboxImage()
 
     const frame = this._lbEl.querySelector('.lb-frame')
@@ -617,9 +626,10 @@ export class HUD {
       { opacity: 1, scale: 1,    y: 0,  duration: 0.4, ease: 'power3.out' })
   }
 
-  // Arrow-key navigation between images while the lightbox is open — wraps around.
+  // Arrow-key / arrow-button navigation between images while the lightbox is
+  // open — wraps around.
   _navLightbox(delta) {
-    const n = this._panels.length
+    const n = this._lbImages?.length
     if (!n) return
     sounds.play('click')
     this._lbIndex = (this._lbIndex + delta + n) % n
