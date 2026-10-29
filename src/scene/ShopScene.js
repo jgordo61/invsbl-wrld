@@ -41,6 +41,15 @@ export class ShopScene extends THREE.EventDispatcher {
     return this
   }
 
+  // Start on a given item instead of the first — no animation or 'change'
+  // event, since nothing has been revealed yet. Used for deep links.
+  setInitial(index) {
+    if (index <= 0 || index >= this.items.length || index === this.current) return
+    this.items[this.current].disableInteraction()
+    this.current = index
+    this.items[index].enableInteraction(this.domElement)
+  }
+
   // Called by main.js when the shop entrance animation finishes.
   // Safe to call multiple times — JewelryViewer.show() is idempotent.
   revealCurrent() {

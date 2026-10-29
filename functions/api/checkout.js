@@ -21,9 +21,6 @@ const FLAT_PRICES = {
   'EPSILON':        7700,
   'HYPERCUBE':      28500,
   'GINSENG RITUAL': 60000,
-  // TEMP — end-to-end production payment test only. Not in the catalog/UI
-  // anywhere, so real visitors can never reach it. Remove after the test.
-  'TEST TRANSACTION': 100,
 }
 
 // Gauged piercings — require a size, priced per gauge.

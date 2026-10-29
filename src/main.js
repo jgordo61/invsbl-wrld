@@ -174,6 +174,16 @@ CATALOG.forEach(item => { if (!item.toc) item.images = photosFor(item.name) })
 // navigation/rendering everywhere below.
 const VISIBLE_CATALOG = CATALOG.filter(item => !item.hidden)
 
+// Deep link — e.g. invsbl.world/?item=ginseng-ritual lands on the normal
+// landing page, then (on the visitor's usual tap/swipe to enter) opens the
+// shop directly on that piece. Matched with slugify() like the photo folders,
+// so case/spacing don't matter. One-shot: cleared after the first entry so
+// returning to landing and re-entering starts from the first item as usual.
+let _deepLinkIndex = (() => {
+  const want = new URLSearchParams(location.search).get('item')
+  return want ? VISIBLE_CATALOG.findIndex(i => slugify(i.name) === slugify(want)) : -1
+})()
+
 // ════════════════════════════════════════════════════════════════════════════
 //  DOM
 // ════════════════════════════════════════════════════════════════════════════
@@ -342,6 +352,7 @@ async function enterShop() {
       currentIdx.textContent = String(loaded).padStart(2, '0')
     }).then(() => {
       shop.enableScrollNavigation(shopEl)
+      if (_deepLinkIndex > 0) { shop.setInitial(_deepLinkIndex); _deepLinkIndex = -1 }
       updateHUD()
       shop.addEventListener('exit', () => exitShop())
       shop.addEventListener('change', () => {
